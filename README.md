@@ -13,5 +13,8 @@ Instructions:
 4) Choose color of your pieces and AI playing level in the Options menu.
 5) Mouse controls. Click menu buttons with left mouse click. Left mouse click on the board square to make a move.
 
+Some concepts used in the project: minimax, negamax, alpha beta prunning, principle variation search (PVS), bitboards.
+
+The project is still in the development stage and there are many things yet to be implemented.
 
 To learn more about game of othello please refer to the following wikipedia article: https://en.wikipedia.org/wiki/Reversi
