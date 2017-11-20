@@ -1,7 +1,7 @@
 INC_DIR = include
 SRC_DIR = src
 OBJ_DIR = obj
-SFML_DIR = /home/Downloads/dev_libs/SFML-2.4.2
+SFML_DIR = # put your SFML directory here (for example: /home/dev_libs/SFML-2.4.2)
 SFML_INC = $(SFML_DIR)/include/
 SFLM_LIB_LOC = $(SFML_DIR)/lib/
 CXX = g++ -std=c++11
