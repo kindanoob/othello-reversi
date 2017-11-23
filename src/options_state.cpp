@@ -111,9 +111,7 @@ void OptionsState::Update(Application *app) {}
 void OptionsState::Draw(Application *app) {}
 
 void OptionsState::CreateFont(Application *app) {
-    //font_ = app->resource_holder_->fonts_->GetResource(FontName::kUbuntuFont);
     font_ = app->resource_holder_->fonts_->GetResource(FontName::kArialFont);
-    //font_ = app->resource_holder_->fonts_->GetResource(FontName::kCyrillicFont);
 }
 
 void OptionsState::Init(Application *app) {
