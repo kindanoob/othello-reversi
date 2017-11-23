@@ -1,9 +1,11 @@
 #include "board.h"
 
 
-const u64 kInitialWhiteBitboard = 0b0000000000000000000000000001000000001000000000000000000000000000ull;
-const u64 kInitialBlackBitboard = 0b0000000000000000000000000000100000010000000000000000000000000000ull;
-const u64 kFullBitboard = 0b1111111111111111111111111111111111111111111111111111111111111111ull;
+const u64 kInitialWhiteBitboard = 0b0000000000000000000000000001000000001000000000000000000000000000ULL;
+const u64 kInitialBlackBitboard = 0b0000000000000000000000000000100000010000000000000000000000000000ULL;
+const u64 kFULLBitboard = 0b1111111111111111111111111111111111111111111111111111111111111111ULL;
+const u64 kCornerBitboard = 0b1000000100000000000000000000000000000000000000000000000010000001ULL;
+const u64 kXSquareBitboard = 0b0000000001000010000000000000000000000000000000000100001000000000ULL;
 
 
 Board::Board() {
@@ -43,12 +45,12 @@ u64 Board::BitboardPopcount(u64 bitboard) {
 }
 
 u64 Board::BitboardPopcount2(u64 b) {
-     b = (b & 0x5555555555555555ull) + ((b >> 1) & 0x5555555555555555ull);
-     b = (b & 0x3333333333333333ull) + ((b >> 2) & 0x3333333333333333ull);
-     b += (b >> 4) & 0x0F0F0F0F0F0F0F0Full;
+     b = (b & 0x5555555555555555ULL) + ((b >> 1) & 0x5555555555555555ULL);
+     b = (b & 0x3333333333333333ULL) + ((b >> 2) & 0x3333333333333333ULL);
+     b += (b >> 4) & 0x0F0F0F0F0F0F0F0FULL;
      b += (b >> 8);
      b += (b >> 16);
-     b += ((b >> 32) & 0x0000007Full);
+     b += ((b >> 32) & 0x0000007FULL);
      return static_cast<int>(b);
 }
 
@@ -66,15 +68,15 @@ double Board::EvalBoard(int move_number, int color) {
     if (move_number < 59) {        
         u64 empty = ~(black_bitboard_ | white_bitboard_);
 
-        int corners_black = BitboardPopcount(black_bitboard_ & 0b1000000100000000000000000000000000000000000000000000000010000001ull);
-        int corners_white = BitboardPopcount(white_bitboard_ & 0b1000000100000000000000000000000000000000000000000000000010000001ull);
+        int corners_black = BitboardPopcount(black_bitboard_ & kCornerBitboard);
+        int corners_white = BitboardPopcount(white_bitboard_ & kCornerBitboard);
 
 
-        int x_square_black = BitboardPopcount(black_bitboard_ & 0b0000000001000010000000000000000000000000000000000100001000000000ull);
-        int x_square_white = BitboardPopcount(white_bitboard_ & 0b0000000001000010000000000000000000000000000000000100001000000000ull);
+        int x_square_black = BitboardPopcount(black_bitboard_ & kXSquareBitboard);
+        int x_square_white = BitboardPopcount(white_bitboard_ & kXSquareBitboard);
 
-        u64 adjacent_black = (West(black_bitboard_) | East(black_bitboard_) | North(black_bitboard_) | South(black_bitboard_) | NorthEast(black_bitboard_) | NorthWest(black_bitboard_) | SouthEast(black_bitboard_) | SouthWest(black_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ull;
-        u64 adjacent_white = (West(white_bitboard_) | East(white_bitboard_) | North(white_bitboard_) | South(white_bitboard_) | NorthEast(white_bitboard_) | NorthWest(white_bitboard_) | SouthEast(white_bitboard_) | SouthWest(white_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ull;
+        u64 adjacent_black = (West(black_bitboard_) | East(black_bitboard_) | North(black_bitboard_) | South(black_bitboard_) | NorthEast(black_bitboard_) | NorthWest(black_bitboard_) | SouthEast(black_bitboard_) | SouthWest(black_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ULL;
+        u64 adjacent_white = (West(white_bitboard_) | East(white_bitboard_) | North(white_bitboard_) | South(white_bitboard_) | NorthEast(white_bitboard_) | NorthWest(white_bitboard_) | SouthEast(white_bitboard_) | SouthWest(white_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ULL;
         int num_adjacent_black = BitboardPopcount(adjacent_black);//number of discs adjacent to black discs in all directions
         int num_adjacent_white = BitboardPopcount(adjacent_white);
 
@@ -88,8 +90,8 @@ double Board::EvalBoard(int move_number, int color) {
 
 double Board::EvalBoardSort(int color) {
     u64 empty = ~(black_bitboard_ | white_bitboard_);
-    u64 adjacent_black = (West(black_bitboard_) | East(black_bitboard_) | North(black_bitboard_) | South(black_bitboard_) | NorthEast(black_bitboard_) | NorthWest(black_bitboard_) | SouthEast(black_bitboard_) | SouthWest(black_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ull;
-    u64 adjacent_white = (West(white_bitboard_) | East(white_bitboard_) | North(white_bitboard_) | South(white_bitboard_) | NorthEast(white_bitboard_) | NorthWest(white_bitboard_) | SouthEast(white_bitboard_) | SouthWest(white_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ull;
+    u64 adjacent_black = (West(black_bitboard_) | East(black_bitboard_) | North(black_bitboard_) | South(black_bitboard_) | NorthEast(black_bitboard_) | NorthWest(black_bitboard_) | SouthEast(black_bitboard_) | SouthWest(black_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ULL;
+    u64 adjacent_white = (West(white_bitboard_) | East(white_bitboard_) | North(white_bitboard_) | South(white_bitboard_) | NorthEast(white_bitboard_) | NorthWest(white_bitboard_) | SouthEast(white_bitboard_) | SouthWest(white_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ULL;
     int num_adjacent_black = BitboardPopcount(adjacent_black);//number of discs adjacent to black discs in all directions
     int num_adjacent_white = BitboardPopcount(adjacent_white);    
     return color * (num_adjacent_white - num_adjacent_black);
@@ -151,7 +153,7 @@ std::vector<u64> Board::GenPossibleMovesIndicators(u64 possible_moves) {
     std::vector<u64> possible_moves_indicators;
     ScoreMove temp_score_move;
     for (int i = 0; i < 64; i++) {
-        if ((possible_moves & kIndicatorBitboards[i]) != 0ull) {
+        if ((possible_moves & kIndicatorBitboards[i]) != 0ULL) {
             possible_moves_indicators.push_back(kIndicatorBitboards[i]);
         }
     }
@@ -174,20 +176,18 @@ void Board::Reset() {
 }
 
 bool Board::IsOnBoard(u64 b) {    
-    return (b & kFullBitboard);
+    return (b & kFULLBitboard);
 }
 
 bool Board::IsOnCorner(u64 my_move) {
-    u64 corner_board = 0b1000000100000000000000000000000000000000000000000000000010000001ull;
-    return (my_move & corner_board);
+    return (my_move & kCornerBitboard);
 }
 
 u64 Board::RandomComputerMove(int color) {
-    u64 possible_computer_moves = this->ValidMoves(color);
+    u64 possible_computer_moves = ValidMoves(color);
     u64 temp = possible_computer_moves;
     std::vector<int> index_vector;
-    for (int i = 0; i < 64; i++)
-    {
+    for (int i = 0; i < 64; i++) {
         if ((temp % 2) == 1) {
             index_vector.push_back(i);
         }
@@ -197,15 +197,14 @@ u64 Board::RandomComputerMove(int color) {
     int rand_bit = index_vector[rand_index];
     u64 b = possible_computer_moves;
     std::bitset<64> a1 (b >> 32);
-    std::bitset<64> a2 (b & 0b0000000000000000000000000000000011111111111111111111111111111111ull);
+    std::bitset<64> a2 (b & 0b0000000000000000000000000000000011111111111111111111111111111111ULL);
     std::bitset<64> a ((a1 << 32) | a2);
-    return 0b0000000000000000000000000000000000000000000000000000000000000001ull << rand_bit;
+    return 0b0000000000000000000000000000000000000000000000000000000000000001ULL << rand_bit;
 
 }
 
 
-void Board::ConvertToBinary(u64 n) /*Alex says: Good to use unsigned int if u can*/
-{
+void Board::ConvertToBinary(u64 n) {
     if (n / 2 != 0) {
         ConvertToBinary(n / 2);
     }
@@ -245,27 +244,27 @@ u64 Board::South4(u64 x) {
 }
 
 u64 Board::East(u64 x) {
-  return (x & 0xfefefefefefefefeull) >> 1;
+  return (x & 0xfefefefefefefefeULL) >> 1;
 }
 
 u64 Board::East2(u64 x) {
-  return (x & 0xfcfcfcfcfcfcfcfcull) >> 2;
+  return (x & 0xfcfcfcfcfcfcfcfcULL) >> 2;
 }
 
 u64 Board::East4(u64 x) {
-  return (x & 0xf0f0f0f0f0f0f0f0ull) >> 4;
+  return (x & 0xf0f0f0f0f0f0f0f0ULL) >> 4;
 }
 
 u64 Board::West(u64 x) {
-  return (x & 0x7f7f7f7f7f7f7f7full) << 1;
+  return (x & 0x7f7f7f7f7f7f7f7fULL) << 1;
 }
 
 u64 Board::West2(u64 x) {
-  return (x & 0x3f3f3f3f3f3f3f3full) << 2;
+  return (x & 0x3f3f3f3f3f3f3f3fULL) << 2;
 }
 
 u64 Board::West4(u64 x) {
-  return (x & 0x0f0f0f0f0f0f0f0full) << 4;
+  return (x & 0x0f0f0f0f0f0f0f0fULL) << 4;
 }
 
 u64 Board::NorthWest(u64 x) {
@@ -391,8 +390,8 @@ u64 Board::SaturateSouthWest(u64 x, u64 obstacles) {
 
 
 u64 Board::ValidMoves(int color) {
-    u64 mine = 0ull;
-    u64 enemy = 0ull;
+    u64 mine = 0ULL;
+    u64 enemy = 0ULL;
     if (color == -1) {
         mine = white_bitboard_;
         enemy = black_bitboard_;
@@ -412,8 +411,8 @@ u64 Board::ValidMoves(int color) {
 }
 
 u64 Board::ValidMovesImproved(int color) {
-    u64 mine_init = 0ull;
-    u64 enemy_init = 0ull;
+    u64 mine_init = 0ULL;
+    u64 enemy_init = 0ULL;
     if (color == -1) {
         mine_init = white_bitboard_;
         enemy_init = black_bitboard_;
@@ -423,7 +422,7 @@ u64 Board::ValidMovesImproved(int color) {
     }
     u64 empty = ~(mine_init | enemy_init);
     u64 not_mine_init = ~mine_init;
-    u64 result = 0ull;
+    u64 result = 0ULL;
 
 
     u64 mine = mine_init;//NORTH
@@ -446,7 +445,7 @@ u64 Board::ValidMovesImproved(int color) {
     result |= South(mine & not_mine_init);
 
     mine = mine_init;//WEST
-    enemy = enemy_init & 0x7f7f7f7f7f7f7f7full;
+    enemy = enemy_init & 0x7f7f7f7f7f7f7f7fULL;
     mine |= enemy & West(mine);
     enemy &= (enemy << 1);
     mine |= enemy & West2(mine);
@@ -455,7 +454,7 @@ u64 Board::ValidMovesImproved(int color) {
     result |= West(mine & not_mine_init);
 
     mine = mine_init;//EAST
-    enemy = enemy_init & 0xfefefefefefefefeull;
+    enemy = enemy_init & 0xfefefefefefefefeULL;
     mine |= enemy & East(mine);
     enemy &= (enemy >> 1);
     mine |= enemy & East2(mine);
@@ -464,58 +463,58 @@ u64 Board::ValidMovesImproved(int color) {
     result |= East(mine & not_mine_init);
 
     mine = mine_init;//NORTH_EAST
-    enemy = enemy_init & 0xfefefefefefefefeull;
+    enemy = enemy_init & 0xfefefefefefefefeULL;
     mine |= enemy & NorthEast(mine);
     enemy &= (enemy << 7);
     mine |= enemy & NorthEast2(mine);
     enemy &= (enemy << 14);
     mine |= enemy & NorthEast4(mine);
-    result |= ((mine & not_mine_init & 0x7f7f7f7f7f7f7f7full) << 7);
+    result |= ((mine & not_mine_init & 0x7f7f7f7f7f7f7f7fULL) << 7);
 
 
 
 
     mine = mine_init;//NORTH_WEST
-    enemy = enemy_init & 0x7f7f7f7f7f7f7f7full;
+    enemy = enemy_init & 0x7f7f7f7f7f7f7f7fULL;
     mine |= enemy & NorthWest(mine);
     enemy &= (enemy << 9);
     mine |= enemy & NorthWest2(mine);
     enemy &= (enemy << 18);
     mine |= enemy & NorthWest4(mine);
-    result |= ((mine & not_mine_init & 0xfefefefefefefefeull) << 9);
+    result |= ((mine & not_mine_init & 0xfefefefefefefefeULL) << 9);
 
 
 
 
 
     mine = mine_init;//SOUTH_EAST
-    enemy = enemy_init & 0xfefefefefefefefeull;
+    enemy = enemy_init & 0xfefefefefefefefeULL;
     mine |= enemy & SouthEast(mine);
     enemy &= (enemy >> 9);
     mine |= enemy & SouthEast2(mine);
     enemy &= (enemy >> 18);
     mine |= enemy & SouthEast4(mine);
-    result |= ((mine & not_mine_init & 0x7f7f7f7f7f7f7f7full) >> 9);
+    result |= ((mine & not_mine_init & 0x7f7f7f7f7f7f7f7fULL) >> 9);
 
 
 
 
     mine = mine_init;//SOUTH_WEST
-    enemy = enemy_init & 0x7f7f7f7f7f7f7f7full;
+    enemy = enemy_init & 0x7f7f7f7f7f7f7f7fULL;
     mine |= enemy & SouthWest(mine);
     enemy &= (enemy >> 7);
     mine |= enemy & SouthWest2(mine);
     enemy &= (enemy >> 14);
     mine |= enemy & SouthWest4(mine);
-    result |= ((mine & not_mine_init & 0xfefefefefefefefeull) >> 7);
+    result |= ((mine & not_mine_init & 0xfefefefefefefefeULL) >> 7);
 
     return result & empty;
 }
 
 void Board::MakeMove(int color, u64 my_move) {
-    u64 result = 0ull;
-    u64 * my_pieces = 0ull;
-    u64 * opp_pieces = 0ull;
+    u64 result = 0ULL;
+    u64 *my_pieces = nullptr;
+    u64 *opp_pieces = nullptr;
     if (color == -1) {
         my_pieces = &white_bitboard_;
         opp_pieces = &black_bitboard_;
@@ -528,49 +527,49 @@ void Board::MakeMove(int color, u64 my_move) {
     for (int i = 0; i < 5; ++i)
         tiles_to_flip |= North(tiles_to_flip) & (*opp_pieces);
     //result |= (tiles_to_flip & (N(tiles_to_flip) & (*my_pieces)));
-    if ( (North(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (North(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
     tiles_to_flip = South(my_move) & (*opp_pieces);
     for (int i=0; i<5; ++i)
         tiles_to_flip |= South(tiles_to_flip) & (*opp_pieces);
     //result |= (tiles_to_flip & (S(tiles_to_flip) & (*my_pieces)));
-    if ( (South(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (South(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
     tiles_to_flip = East(my_move) & (*opp_pieces);
     for (int i=0; i<5; ++i)
         tiles_to_flip |= East(tiles_to_flip) & (*opp_pieces);
     //result |= (tiles_to_flip & (E(tiles_to_flip) & (*my_pieces)));
-    if ( (East(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (East(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
     tiles_to_flip = West(my_move) & (*opp_pieces);
     for (int i=0; i<5; ++i)
         tiles_to_flip |= West(tiles_to_flip) & (*opp_pieces);
     //result |= (tiles_to_flip & (W(tiles_to_flip) & (*my_pieces)));
-    if ( (West(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (West(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
     tiles_to_flip = NorthEast(my_move) & (*opp_pieces);
     for (int i=0; i<5; ++i)
         tiles_to_flip |= NorthEast(tiles_to_flip) & (*opp_pieces);
     //result |= (tiles_to_flip & (NE(tiles_to_flip) & (*my_pieces)));
-    if ( (NorthEast(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (NorthEast(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
     tiles_to_flip = NorthWest(my_move) & (*opp_pieces);
     for (int i=0; i<5; ++i)
         tiles_to_flip |= NorthWest(tiles_to_flip) & (*opp_pieces);
     //result |= (tiles_to_flip & (NW(tiles_to_flip) & (*my_pieces)));
-    if ( (NorthWest(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (NorthWest(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
     tiles_to_flip = SouthEast(my_move) & (*opp_pieces);
     for (int i=0; i<5; ++i)
         tiles_to_flip |= SouthEast(tiles_to_flip) & (*opp_pieces);
     //result |= (tiles_to_flip & (SE(tiles_to_flip) & (*my_pieces)));
-    if ( (SouthEast(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (SouthEast(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
     tiles_to_flip = SouthWest(my_move) & (*opp_pieces);
     for (int i=0; i<5; ++i)
         tiles_to_flip |= SouthWest(tiles_to_flip) & (*opp_pieces);
     //result |= (tiles_to_flip & (SW(tiles_to_flip) & (*my_pieces)));
-    if ( (SouthWest(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (SouthWest(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
     *my_pieces |= result;
     *my_pieces |= my_move;
@@ -578,9 +577,9 @@ void Board::MakeMove(int color, u64 my_move) {
 }
 
 u64 Board::MakeMoveImproved(int color, u64 my_move) {
-    u64 result = 0ull;
-    u64 * my_pieces = nullptr;
-    u64 * opp_pieces = nullptr;
+    u64 result = 0ULL;
+    u64 *my_pieces = nullptr;
+    u64 *opp_pieces = nullptr;
     if (color == -1) {
         my_pieces = &white_bitboard_;
         opp_pieces = &black_bitboard_;
@@ -591,21 +590,21 @@ u64 Board::MakeMoveImproved(int color, u64 my_move) {
 
     u64 frontier = North(my_move) & (*opp_pieces);
     u64 tiles_to_flip = frontier;
-    while ((North(frontier) & (*opp_pieces)) != 0ull) {
+    while ((North(frontier) & (*opp_pieces)) != 0ULL) {
         tiles_to_flip |= North(frontier) & (*opp_pieces);
         frontier = North(frontier) & (*opp_pieces);
     }
-    if ((North(tiles_to_flip) & (*my_pieces)) != 0ull ) {
+    if ((North(tiles_to_flip) & (*my_pieces)) != 0ULL ) {
         result |= tiles_to_flip;
     }
 
     frontier = South(my_move) & (*opp_pieces);
     tiles_to_flip = frontier;
-    while ((South(frontier) & (*opp_pieces)) != 0ull) {
+    while ((South(frontier) & (*opp_pieces)) != 0ULL) {
         tiles_to_flip |= South(frontier) & (*opp_pieces);
         frontier = South(frontier) & (*opp_pieces);
     }
-    if ( (South(tiles_to_flip) & (*my_pieces)) != 0ull ) { 
+    if ( (South(tiles_to_flip) & (*my_pieces)) != 0ULL ) { 
         result |= tiles_to_flip; 
     }
 
@@ -613,61 +612,61 @@ u64 Board::MakeMoveImproved(int color, u64 my_move) {
 
     frontier = West(my_move) & (*opp_pieces);
     tiles_to_flip = frontier;
-    while ((West(frontier) & (*opp_pieces)) != 0ull) {
+    while ((West(frontier) & (*opp_pieces)) != 0ULL) {
         tiles_to_flip |= West(frontier) & (*opp_pieces);
         frontier = West(frontier) & (*opp_pieces);
     }
-    if ( (West(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (West(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
 
 
     frontier = East(my_move) & (*opp_pieces);
     tiles_to_flip = frontier;
-    while ((East(frontier) & (*opp_pieces)) != 0ull) {
+    while ((East(frontier) & (*opp_pieces)) != 0ULL) {
         tiles_to_flip |= East(frontier) & (*opp_pieces);
         frontier = East(frontier) & (*opp_pieces);
     }
-    if ( (East(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (East(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
 
 
 
     frontier = SouthEast(my_move) & (*opp_pieces);
     tiles_to_flip = frontier;
-    while ((SouthEast(frontier) & (*opp_pieces)) != 0ull) {
+    while ((SouthEast(frontier) & (*opp_pieces)) != 0ULL) {
         tiles_to_flip |= SouthEast(frontier) & (*opp_pieces);
         frontier = SouthEast(frontier) & (*opp_pieces);
     }
-    if ( (SouthEast(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (SouthEast(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
 
 
     frontier = SouthWest(my_move) & (*opp_pieces);
     tiles_to_flip = frontier;
-    while ((SouthWest(frontier) & (*opp_pieces)) != 0ull) {
+    while ((SouthWest(frontier) & (*opp_pieces)) != 0ULL) {
         tiles_to_flip |= SouthWest(frontier) & (*opp_pieces);
         frontier = SouthWest(frontier) & (*opp_pieces);
     }
-    if ( (SouthWest(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (SouthWest(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
 
 
     frontier = NorthEast(my_move) & (*opp_pieces);
     tiles_to_flip = frontier;
-    while ((NorthEast(frontier) & (*opp_pieces)) != 0ull) {
+    while ((NorthEast(frontier) & (*opp_pieces)) != 0ULL) {
         tiles_to_flip |= NorthEast(frontier) & (*opp_pieces);
         frontier = NorthEast(frontier) & (*opp_pieces);
     }
-    if ( (NorthEast(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (NorthEast(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
 
     frontier = NorthWest(my_move) & (*opp_pieces);
     tiles_to_flip = frontier;
-    while ((NorthWest(frontier) & (*opp_pieces)) != 0ull) {
+    while ((NorthWest(frontier) & (*opp_pieces)) != 0ULL) {
         tiles_to_flip |= NorthWest(frontier) & (*opp_pieces);
         frontier = NorthWest(frontier) & (*opp_pieces);
     }
-    if ( (NorthWest(tiles_to_flip) & (*my_pieces)) != 0ull ) { result |= tiles_to_flip; }
+    if ( (NorthWest(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
 
     *opp_pieces ^= result;
     *my_pieces |= (result | my_move);
@@ -675,8 +674,8 @@ u64 Board::MakeMoveImproved(int color, u64 my_move) {
 }
 
 void Board::UnmakeMove(int color, u64 m_move, u64 tiles_to_flip) {
-    u64 * my_pieces = 0ull;
-    u64 * opp_pieces = 0ull;
+    u64 *my_pieces = nullptr;
+    u64 *opp_pieces = nullptr;
     if (color == -1) {
         my_pieces = &white_bitboard_;
         opp_pieces = &black_bitboard_;
@@ -691,7 +690,7 @@ void Board::UnmakeMove(int color, u64 m_move, u64 tiles_to_flip) {
 std::vector<u64> CreateIndicatorBitboard() {
     std::vector<u64> indicator_bitboard;
     for (int i = 0; i < 64; i++) {
-        indicator_bitboard.emplace_back(0b1ull << i);
+        indicator_bitboard.emplace_back(0b1ULL << i);
     }
     return indicator_bitboard;
 
