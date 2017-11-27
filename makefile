@@ -1,11 +1,12 @@
 INC_DIR = include
 SRC_DIR = src
 OBJ_DIR = obj
-SFML_DIR = # put your SFML directory here (for example: /home/dev_libs/SFML-2.4.2)
+SFML_DIR = put your SFML directory here (for example: /home/dev_libs/SFML-2.4.2)
 SFML_INC = $(SFML_DIR)/include/
 SFLM_LIB_LOC = $(SFML_DIR)/lib/
 CXX = g++ -std=c++11
-DEBUG = -O0 -g
+#DEBUG = -O0 -g -pg
+DEBUG = -O3 -pg
 CXXFLAGS = -Wall -c $(DEBUG) -I$(INC_DIR)
 LDFLAGS = -Wall $(DEBUG)
 SFML_LIBS =  -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-system

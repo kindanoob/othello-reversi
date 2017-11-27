@@ -37,6 +37,8 @@ public:
     void CreateFont(Application *app);
     void CreateAiColorText(Application *app);
     void CreateAiColorButtons(Application *app);
+    void CreateShowValidMovesColorText(Application *app);
+    void CreateShowValidMovesButtons(Application *app);
 private:
     sf::RenderWindow *window_ = nullptr;
     Button *back_button_ = nullptr;
@@ -45,9 +47,13 @@ private:
     Button *hard_ai_button_ = nullptr;
     Button *ai_color_white_button_ = nullptr;
     Button *ai_color_black_button_ = nullptr;
+    Button *analyze_button_ = nullptr;
+    Button *show_valid_moves_button_yes_ = nullptr;
+    Button *show_valid_moves_button_no_ = nullptr;
     sf::Text choose_ai_color_text_;
     //std::string choose_ai_level_string_ = "Choose AI level: ";
     sf::Text choose_ai_level_text_;
+    sf::Text show_valid_moves_text_;
     sf::Font font_;
 };
 

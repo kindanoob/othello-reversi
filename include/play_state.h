@@ -10,6 +10,7 @@
 
 
 #include "game_state.h"
+#include "util.h"
 //#include "board.h"
 
 
@@ -39,7 +40,6 @@ public:
     void Draw(Application *app);
     void DrawBoard(Application *app);
     void Reset(Application *app);    
-    //void DrawMap(Application *app);        
     void Init(Application *app);
     Board *GetBoard();
     bool GameIsOver();
@@ -49,19 +49,24 @@ public:
     }
     int GetBlackScore();
     int GetWhiteScore();
-    void MakeMove(Application *app);
-    void MakeMoveImproved(Application *app);
+    void MakeMoveNegamaxAB(Application *app);
+    void MakeMoveNegamaxAB_Analyze(Application *app);
+    void MakeMovePVS(Application *app);
     void GenerateBitboardToCoordinates();
-    std::unordered_map<u64, std::string> BitboardToCoordinates();
-    ScoreMove NegamaxAB(Board *board, int color, int depth, double alpha, double beta, int move_number);
+    std::unordered_map<u64, std::string>& BitboardToCoordinates();
+    u64 RootNegamaxAB(int color, int depth, double alpha, double beta, int move_number, Application *app);
+    double NegamaxAB(int color, int depth, int max_depth, double alpha, double beta, int move_number, Application *app);    
+    std::vector<ScoreMove> OrderMovesByShallowSearch(const std::vector<u64>& valid_moves_indicators, 
+        int color, int move_number, Application *app);
     void ShowFinalScore(Application *app);
     void InitGameIsOverOkButton();
     Button *GameIsOverOkButton();
     u64 RootSearchPvsPv(int color, int depth, double alpha, double beta, int move_number,
-                             Line *line_prev, Line *pline_curr);
+                             Line *line_prev, Line *pline_curr, Application *app);
     double PvsPv(int color, int depth, int root_depth, double alpha, double beta, int move_number,
-                 Line *pline_prev, Line *pline_curr);
+                 Line *pline_prev, Line *pline_curr, Application *app);
     void SetSideToMove(SideToMove side_to_move);
+    void SwitchSideToMove();
     void IncreaseMoveNumber();
     void DecreaseMoveNumber();
     int TimePerMove();
@@ -74,6 +79,17 @@ public:
     void CreatePassTurnOkButton();
     void CreatePassTurnEntities();
     bool PassTurnHuman();
+    void PrintPrincipalVariation(const Line& principal_variation_curr, int depth);
+    void AddMoveToHistory(u64 current_move);
+    void PrintMoveHistory();
+    void RunPerftTest(Application *app);
+    u64 Perft(Board board, int depth, int color, Application *app);
+    void DrawPieces(Application *app);
+    void DrawValidMoves(Application *app);
+    void DrawBoardGrid(Application *app);
+    void DrawScores(Application *app);
+    void DrawBoardEvals(Application *app);
+
     
 private:
     Board *board_ = nullptr;
@@ -104,6 +120,10 @@ private:
     bool pass_turn_computer_ = false;
     Button *pass_turn_ok_button_ = nullptr;    
     sf::Text pass_turn_text_;
+    std::vector<std::string> move_history_;
+    std::unordered_map<u64, double> board_eval_memo_; //is used for board evaluation scores
+    bool finished_analysis_ = false; // is used in analyze mode
+    
 };
 
 #endif // PLAY_STATE_H_

@@ -1,11 +1,16 @@
 #include "board.h"
+#include "util.h"
 
 
 const u64 kInitialWhiteBitboard = 0b0000000000000000000000000001000000001000000000000000000000000000ULL;
 const u64 kInitialBlackBitboard = 0b0000000000000000000000000000100000010000000000000000000000000000ULL;
-const u64 kFULLBitboard = 0b1111111111111111111111111111111111111111111111111111111111111111ULL;
+const u64 kFullBitboard = 0b1111111111111111111111111111111111111111111111111111111111111111ULL;
 const u64 kCornerBitboard = 0b1000000100000000000000000000000000000000000000000000000010000001ULL;
 const u64 kXSquareBitboard = 0b0000000001000010000000000000000000000000000000000100001000000000ULL;
+const u64 kCSquareBitboard = 0b0100001010000001000000000000000000000000000000001000000101000010ULL;
+const u64 kXSquareCSquareBitboard = kXSquareBitboard | kCSquareBitboard;
+const u64 kExceptXSquaresBitboard = kFullBitboard ^ kXSquareBitboard;
+const u64 kExceptXSquaresCSquaresBitboard = kFullBitboard ^ kXSquareCSquareBitboard;
 
 
 Board::Board() {
@@ -19,6 +24,35 @@ Board::Board(const Board& board) {
 
 }
 
+void Board::PrintBitboardToConsole(u64 b) {
+    for (int i = 7; i >= 0; --i) {
+        for (int j = 7; j >= 0; --j) {
+            if (b & (1ULL << (8 * i + j))) {
+                std::cout << 'o';
+            } else {
+                std::cout << '_';
+            }
+        }
+        std::cout << std::endl;
+    }
+}
+
+void Board::PrintBoardToConsole() {
+    std::cout << "Board: " << std::endl;
+    for (int i = 7; i >= 0; --i) {
+        for (int j = 7; j >= 0; --j) {
+            if (black_bitboard_ & (1ULL << (8 * i + j))) {
+                std::cout << 'x';
+            } else if (white_bitboard_ & (1ULL << (8 * i + j))) {
+                std::cout << 'o';
+            } else {
+                std::cout << '_';
+            }
+        }
+        std::cout << std::endl;
+    }
+}
+
 u64 Board::Occupied() {
   return (white_bitboard_ | black_bitboard_);
 }
@@ -28,29 +62,20 @@ u64 Board::Empty() {
 }
 
 int Board::BlackScore() {
-    return BitboardPopcount(black_bitboard_);
+    return Util::BitboardPopcount(black_bitboard_);
 }
 
 int Board::WhiteScore() {
-    return BitboardPopcount(white_bitboard_);
+    return Util::BitboardPopcount(white_bitboard_);
 }
 
-u64 Board::BitboardPopcount(u64 bitboard) {
-    int cnt = 0;
-    while(bitboard) {
-        bitboard &= (bitboard - 1);
-        ++cnt;
-    }
-    return cnt;
-}
-
-u64 Board::BitboardPopcount2(u64 b) {
+int Board::BitboardPopcount2(u64 b) {
      b = (b & 0x5555555555555555ULL) + ((b >> 1) & 0x5555555555555555ULL);
      b = (b & 0x3333333333333333ULL) + ((b >> 2) & 0x3333333333333333ULL);
      b += (b >> 4) & 0x0F0F0F0F0F0F0F0FULL;
      b += (b >> 8);
      b += (b >> 16);
-     b += ((b >> 32) & 0x0000007FULL);
+     b += (b >> 32) & 0x0000007FULL;
      return static_cast<int>(b);
 }
 
@@ -64,41 +89,116 @@ bool CompareByEvalDescending(const ScoreMove& score_move_1, const ScoreMove& sco
 }
 
 
-double Board::EvalBoard(int move_number, int color) {
-    if (move_number < 59) {        
-        u64 empty = ~(black_bitboard_ | white_bitboard_);
+double Board::EvalBoard(int move_number, int color, const std::array<int, 65536>& popcount_hash_table) {
+    int total_count_black = Util::BitboardPopcountHashTable(black_bitboard_, popcount_hash_table);
+    int total_count_white = Util::BitboardPopcountHashTable(white_bitboard_, popcount_hash_table);
+    if (color == 1) {
+        if (total_count_black == 0) {
+            return -kInfinity;
+        }
+    } else {
+        if (total_count_white == 0) {
+            return -kInfinity;
+        }
+    }
 
-        int corners_black = BitboardPopcount(black_bitboard_ & kCornerBitboard);
-        int corners_white = BitboardPopcount(white_bitboard_ & kCornerBitboard);
+    
+    if (move_number < 59) {         
+        int cnt_valid_moves_black = Util::BitboardPopcountHashTable(ValidMoves(1) ^ kExceptXSquaresCSquaresBitboard, popcount_hash_table);
+        int cnt_valid_moves_white = Util::BitboardPopcountHashTable(ValidMoves(-1) ^ kExceptXSquaresCSquaresBitboard, popcount_hash_table);
+        double mobility_heuristic = 1 * (cnt_valid_moves_black - cnt_valid_moves_white);
+        //double mobility_heuristic = 0.0;
+        
 
+        u64 empty = Empty();
+        //u64 occupied = Occupied();
+        //double delta = 1 - move_number / 64.0;
 
-        int x_square_black = BitboardPopcount(black_bitboard_ & kXSquareBitboard);
-        int x_square_white = BitboardPopcount(white_bitboard_ & kXSquareBitboard);
+        int corners_black = Util::BitboardPopcountHashTable(black_bitboard_ & kCornerBitboard, popcount_hash_table);
+        int corners_white = Util::BitboardPopcountHashTable(white_bitboard_ & kCornerBitboard, popcount_hash_table);
+        double corner_heuristic = 16 * (corners_black - corners_white);
 
-        u64 adjacent_black = (West(black_bitboard_) | East(black_bitboard_) | North(black_bitboard_) | South(black_bitboard_) | NorthEast(black_bitboard_) | NorthWest(black_bitboard_) | SouthEast(black_bitboard_) | SouthWest(black_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ULL;
-        u64 adjacent_white = (West(white_bitboard_) | East(white_bitboard_) | North(white_bitboard_) | South(white_bitboard_) | NorthEast(white_bitboard_) | NorthWest(white_bitboard_) | SouthEast(white_bitboard_) | SouthWest(white_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ULL;
-        int num_adjacent_black = BitboardPopcount(adjacent_black);//number of discs adjacent to black discs in all directions
-        int num_adjacent_white = BitboardPopcount(adjacent_white);
+        int x_square_black = Util::BitboardPopcountHashTable(black_bitboard_ & kXSquareBitboard, popcount_hash_table);
+        int x_square_white = Util::BitboardPopcountHashTable(white_bitboard_ & kXSquareBitboard, popcount_hash_table);
+        double xsquare_heuristic = 8 * (x_square_white - x_square_black);
+
+        int c_square_black = Util::BitboardPopcountHashTable(black_bitboard_ & kCSquareBitboard, popcount_hash_table);
+        int c_square_white = Util::BitboardPopcountHashTable(white_bitboard_ & kCSquareBitboard, popcount_hash_table);
+        double c_square_heuristic = (c_square_white - c_square_black);
+
+        u64 adjacent_black = (West(black_bitboard_) | East(black_bitboard_) | North(black_bitboard_) | South(black_bitboard_) | NorthEast(black_bitboard_) | NorthWest(black_bitboard_) | SouthEast(black_bitboard_) | SouthWest(black_bitboard_)) & empty & kExceptXSquaresCSquaresBitboard;
+        u64 adjacent_white = (West(white_bitboard_) | East(white_bitboard_) | North(white_bitboard_) | South(white_bitboard_) | NorthEast(white_bitboard_) | NorthWest(white_bitboard_) | SouthEast(white_bitboard_) | SouthWest(white_bitboard_)) & empty & kExceptXSquaresCSquaresBitboard;
+        int num_adjacent_black = Util::BitboardPopcountHashTable(adjacent_black, popcount_hash_table);//number of empty squares adjacent to black discs in all directions
+        int num_adjacent_white = Util::BitboardPopcountHashTable(adjacent_white, popcount_hash_table);
+        double potential_mobility_heuristic = 2 * (num_adjacent_white - num_adjacent_black);
+
+        return color * (mobility_heuristic + potential_mobility_heuristic + corner_heuristic
+            + xsquare_heuristic + c_square_heuristic);
+        //double disc_count_heuristic = (1 - delta) * (total_count_white - total_count_black);
 
         
-        return color * (((num_adjacent_white - num_adjacent_black) << 1) + ((corners_black - corners_white) << 6) + ((x_square_black - x_square_white) << 2));
+        //std::cout << "in EvalBoard: " << std::endl;
+        //PrintBoardToConsole();
+        //PrintBitboardToConsole(ValidMoves(1));
+        //PrintBitboardToConsole(ValidMoves(-1));
+        //std::cout << " color: " << color << ", move_number : " << move_number <<
+        //", valid moves black: " << cnt_valid_moves_black << ", valid_moves_white: " << cnt_valid_moves_white <<  
+        //", corner_heuristic: " << corner_heuristic << ", xsquare_heuristic: " <<
+        //xsquare_heuristic << ", mobility_heuristic: " << mobility_heuristic << ", potential_mobility_heuristic: " <<
+        //potential_mobility_heuristic << std::endl;
+
+
+        //return color * (corner_heuristic + xsquare_heuristic + 
+//          mobility_heuristic + potential_mobility_heuristic);
         
     } else {
-        return color * (BitboardPopcount(black_bitboard_) - BitboardPopcount(white_bitboard_));
+        double score = color * (total_count_black - total_count_white);
+        //std::cout << "Final stage evaluation" << std::endl;
+        //PrintBoardToConsole();
+        //PrintBitboardToConsole(black_bitboard_);
+        //PrintBitboardToConsole(white_bitboard_);
+        //std::cout << "color: " << color << ", black_cnt : " << total_count_black << 
+        //", white cnt: " << total_count_white << 
+        //", score: " << score << std::endl;
+        return score;
     }
 }
 
-double Board::EvalBoardSort(int color) {
-    u64 empty = ~(black_bitboard_ | white_bitboard_);
-    u64 adjacent_black = (West(black_bitboard_) | East(black_bitboard_) | North(black_bitboard_) | South(black_bitboard_) | NorthEast(black_bitboard_) | NorthWest(black_bitboard_) | SouthEast(black_bitboard_) | SouthWest(black_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ULL;
-    u64 adjacent_white = (West(white_bitboard_) | East(white_bitboard_) | North(white_bitboard_) | South(white_bitboard_) | NorthEast(white_bitboard_) | NorthWest(white_bitboard_) | SouthEast(white_bitboard_) | SouthWest(white_bitboard_)) & empty & 0b1111111110111101111111111111111111111111111111111011110111111111ULL;
-    int num_adjacent_black = BitboardPopcount(adjacent_black);//number of discs adjacent to black discs in all directions
-    int num_adjacent_white = BitboardPopcount(adjacent_white);    
-    return color * (num_adjacent_white - num_adjacent_black);
+double Board::EvalBoardSort(int color, const std::array<int, 65536>& popcount_hash_table) {
+    u64 empty = Empty();
+        //u64 occupied = Occupied();
+        //double delta = 1 - move_number / 64.0;
+
+        int corners_black = Util::BitboardPopcountHashTable(black_bitboard_ & kCornerBitboard, popcount_hash_table);
+        int corners_white = Util::BitboardPopcountHashTable(white_bitboard_ & kCornerBitboard, popcount_hash_table);
+        double corner_heuristic = 16 * (corners_black - corners_white);
+
+        //int x_square_black = Util::BitboardPopcountHashTable(black_bitboard_ & kXSquareBitboard, popcount_hash_table);
+        //int x_square_white = Util::BitboardPopcountHashTable(white_bitboard_ & kXSquareBitboard, popcount_hash_table);
+        //double xsquare_heuristic = 8 * (x_square_white - x_square_black);
+
+        ///int c_square_black = Util::BitboardPopcountHashTable(black_bitboard_ & kCSquareBitboard, popcount_hash_table);
+        //int c_square_white = Util::BitboardPopcountHashTable(white_bitboard_ & kCSquareBitboard, popcount_hash_table);
+        //double c_square_heuristic = (c_square_white - c_square_black);
+
+        u64 adjacent_black = (West(black_bitboard_) | East(black_bitboard_) | North(black_bitboard_) | South(black_bitboard_) | NorthEast(black_bitboard_) | NorthWest(black_bitboard_) | SouthEast(black_bitboard_) | SouthWest(black_bitboard_)) & empty;// & kExceptXSquaresCSquaresBitboard;
+        u64 adjacent_white = (West(white_bitboard_) | East(white_bitboard_) | North(white_bitboard_) | South(white_bitboard_) | NorthEast(white_bitboard_) | NorthWest(white_bitboard_) | SouthEast(white_bitboard_) | SouthWest(white_bitboard_)) & empty;// & kExceptXSquaresCSquaresBitboard;
+        int num_adjacent_black = Util::BitboardPopcountHashTable(adjacent_black, popcount_hash_table);//number of empty squares adjacent to black discs in all directions
+        int num_adjacent_white = Util::BitboardPopcountHashTable(adjacent_white, popcount_hash_table);
+        double potential_mobility_heuristic = 2 * (num_adjacent_white - num_adjacent_black);
+
+    //int valid_moves_black = ValidMoves(1);
+    //int valid_moves_white = ValidMoves(-1);
+    //double mobility_heuristic = 2 * (valid_moves_black - valid_moves_white);    
+    //double mobility_heuristic = 0.0;
+    
+    return color * (potential_mobility_heuristic + corner_heuristic);
+            //+ xsquare_heuristic + c_square_heuristic);
 }
 
 
-void Board::OrderMovesByEvalDescending(std::vector<ScoreMove>& possible_move_score_pairs) {
+
+void Board::OrderMoveScorePairsByEvalDescending(std::vector<ScoreMove>& possible_move_score_pairs) {
     std::sort(possible_move_score_pairs.begin(), 
               possible_move_score_pairs.end(), 
               [](const ScoreMove& a, const ScoreMove& b) {
@@ -106,23 +206,29 @@ void Board::OrderMovesByEvalDescending(std::vector<ScoreMove>& possible_move_sco
               });
 }
 
+//TODO
+void Board::OrderMovesByEvalDescending(std::vector<u64>& valid_moves) {
+    std::sort(valid_moves.begin(), valid_moves.end(),
+        [](u64 a, u64 b) {
+            return 0;
+        });
+}
 
-std::vector<ScoreMove> Board::GenPossibleMoveScorePairsOne(const std::vector<u64> &possible_moves_indicators,
+
+std::vector<ScoreMove> Board::GenPossibleMoveScorePairsOne(const std::vector<u64>& possible_moves_indicators,
                                                            int color,
-                                                           int move_number) {
+                                                           int move_number,
+                                                           const std::array<int, 65536>& popcount_hash_table) {
     std::vector<ScoreMove> possible_move_score_pairs;
     possible_move_score_pairs.reserve(64);
-    ScoreMove temp_score_move;
-    int m_size = possible_moves_indicators.size();
-    u64 current_move;
-    u64 tiles_to_flip;
-    for (int i = 0; i < m_size; i++) {
-        current_move = possible_moves_indicators[i];
-        tiles_to_flip = MakeMoveImproved(color, current_move);
-        temp_score_move.move = current_move;
-        temp_score_move.score = EvalBoardSort(color);
+    for (size_t i = 0; i < possible_moves_indicators.size(); i++) {
+        u64 current_move = possible_moves_indicators[i];
+        u64 tiles_to_flip = MakeMoveImproved(color, current_move);
+        ScoreMove temp_score_move(current_move, EvalBoardSort(color, popcount_hash_table));
+        //temp_score_move.move = current_move;
+        //temp_score_move.score = EvalBoardSort(color);
         UnmakeMove(color, current_move, tiles_to_flip);
-        possible_move_score_pairs.push_back(temp_score_move);
+        possible_move_score_pairs.emplace_back(temp_score_move);
     }
     return possible_move_score_pairs;
 }
@@ -136,7 +242,7 @@ int Board::BitScanForward(u64 bb) {
 
 std::vector<u64> Board::GenPossibleMovesIndicators(u64 data) {
     std::vector<u64> res;
-    res.reserve(BitboardPopcount(data));
+    res.reserve(Util::BitboardPopcount(data));
     while (data) {
         res.emplace_back(kIndicatorBitboards[BitScanForward(data)]);
         u64 m = data & (0 - data);
@@ -165,8 +271,8 @@ std::vector<u64> Board::GenPossibleMovesIndicators(u64 possible_moves) {
 
 
 
-std::vector<u64> Board::GetScore() {
-    return {BitboardPopcount(white_bitboard_), BitboardPopcount(white_bitboard_)};
+std::vector<int> Board::GetScore() {
+    return {Util::BitboardPopcount(white_bitboard_), Util::BitboardPopcount(white_bitboard_)};
 }
 
 
@@ -176,7 +282,7 @@ void Board::Reset() {
 }
 
 bool Board::IsOnBoard(u64 b) {    
-    return (b & kFULLBitboard);
+    return (b & kFullBitboard);
 }
 
 bool Board::IsOnCorner(u64 my_move) {
@@ -189,18 +295,17 @@ u64 Board::RandomComputerMove(int color) {
     std::vector<int> index_vector;
     for (int i = 0; i < 64; i++) {
         if ((temp % 2) == 1) {
-            index_vector.push_back(i);
+            index_vector.emplace_back(i);
         }
         temp /= 2;
     }
     int rand_index = rand() % index_vector.size();
     int rand_bit = index_vector[rand_index];
-    u64 b = possible_computer_moves;
-    std::bitset<64> a1 (b >> 32);
-    std::bitset<64> a2 (b & 0b0000000000000000000000000000000011111111111111111111111111111111ULL);
-    std::bitset<64> a ((a1 << 32) | a2);
-    return 0b0000000000000000000000000000000000000000000000000000000000000001ULL << rand_bit;
-
+    //u64 b = possible_computer_moves;
+    //std::bitset<64> a1 (b >> 32);
+    //std::bitset<64> a2 (b & 0b0000000000000000000000000000000011111111111111111111111111111111ULL);
+    //std::bitset<64> a ((a1 << 32) | a2);
+    return 1ULL << rand_bit;
 }
 
 
@@ -395,11 +500,11 @@ u64 Board::ValidMoves(int color) {
     if (color == -1) {
         mine = white_bitboard_;
         enemy = black_bitboard_;
-    } else if (color == 1) {
+    } else {
         mine = black_bitboard_;
         enemy = white_bitboard_;
     }
-    u64 empty = ~(mine | enemy);
+    u64 empty = Empty();
     return (North(SaturateNorth(mine, empty) & enemy) & empty) | 
            (South(SaturateSouth(mine, empty) & enemy) & empty) | 
            (East(SaturateEast(mine, empty) & enemy) & empty) | 
@@ -432,7 +537,6 @@ u64 Board::ValidMovesImproved(int color) {
     mine |= enemy & North2(mine);
     enemy &= North2(enemy);
     mine |= enemy & North4(mine);
-    //result |= ((mine & not_mine_init) << 8);
     result |= North(mine & not_mine_init);
 
     mine = mine_init;//SOUTH
@@ -513,8 +617,8 @@ u64 Board::ValidMovesImproved(int color) {
 
 void Board::MakeMove(int color, u64 my_move) {
     u64 result = 0ULL;
-    u64 *my_pieces = nullptr;
-    u64 *opp_pieces = nullptr;
+    u64 * my_pieces = 0ULL;
+    u64 * opp_pieces = 0ULL;
     if (color == -1) {
         my_pieces = &white_bitboard_;
         opp_pieces = &black_bitboard_;
@@ -693,7 +797,13 @@ std::vector<u64> CreateIndicatorBitboard() {
         indicator_bitboard.emplace_back(0b1ULL << i);
     }
     return indicator_bitboard;
-
 }
 
+//std::string BitboardToString(u64 b) {
+    //return 
+//}
+
+bool Board::IsTerminalNode() {
+    return (ValidMoves(1) == 0ULL) && (ValidMoves(-1) == 0ULL);
+}
 

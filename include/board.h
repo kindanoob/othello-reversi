@@ -14,15 +14,17 @@
 #include "config.h"
 
 struct ScoreMove {
+    ScoreMove(){};
+    ScoreMove(u64 l_move, double l_score) : move(l_move), score(l_score){};    
+    u64 move = 0ULL;
     double score = 0.0;
-    u64 move = 0ull;
 };
 
 /*
 //structures of this kind are used as values in the memo dictionary
 struct PositionInfo {
     double eval = 0.0;
-    u64 move = 0ull;
+    u64 move = 0ULL;
     int depth = 0;
     int colorto_move_ = 0;
     int flag = 0;//-1 means LOWER_BOUND, 0 means EXACT, 1 means UPPER_BOUND
@@ -32,70 +34,70 @@ struct PositionInfo {
 
 
 //indicator bitboards representing particular squares on the board
-const u64 kIndicatorBitboards[] = {1ull,    
-                                    1ull << 1,
-                                    1ull << 2,
-                                    1ull << 3,
-                                    1ull << 4,
-                                    1ull << 5,
-                                    1ull << 6,
-                                    1ull << 7,
-                                    1ull << 8,
-                                    1ull << 9,
-                                    1ull << 10,
-                                    1ull << 11,
-                                    1ull << 12,
-                                    1ull << 13,
-                                    1ull << 14,
-                                    1ull << 15,
-                                    1ull << 16,
-                                    1ull << 17,
-                                    1ull << 18,
-                                    1ull << 19,
-                                    1ull << 20,
-                                    1ull << 21,
-                                    1ull << 22,
-                                    1ull << 23,
-                                    1ull << 24,
-                                    1ull << 25,
-                                    1ull << 26,
-                                    1ull << 27,
-                                    1ull << 28,
-                                    1ull << 29,
-                                    1ull << 30,
-                                    1ull << 31,
-                                    1ull << 32,
-                                    1ull << 33,
-                                    1ull << 34,
-                                    1ull << 35,
-                                    1ull << 36,
-                                    1ull << 37,
-                                    1ull << 38,
-                                    1ull << 39,
-                                    1ull << 40,
-                                    1ull << 41,
-                                    1ull << 42,
-                                    1ull << 43,
-                                    1ull << 44,
-                                    1ull << 45,
-                                    1ull << 46,
-                                    1ull << 47,
-                                    1ull << 48,
-                                    1ull << 49,
-                                    1ull << 50,
-                                    1ull << 51,
-                                    1ull << 52,
-                                    1ull << 53,
-                                    1ull << 54,
-                                    1ull << 55,
-                                    1ull << 56,
-                                    1ull << 57,
-                                    1ull << 58,
-                                    1ull << 59,
-                                    1ull << 60,
-                                    1ull << 61,
-                                    1ull << 62,
-                                    1ull << 63,
+const u64 kIndicatorBitboards[] = {1ULL,    
+                                    1ULL << 1,
+                                    1ULL << 2,
+                                    1ULL << 3,
+                                    1ULL << 4,
+                                    1ULL << 5,
+                                    1ULL << 6,
+                                    1ULL << 7,
+                                    1ULL << 8,
+                                    1ULL << 9,
+                                    1ULL << 10,
+                                    1ULL << 11,
+                                    1ULL << 12,
+                                    1ULL << 13,
+                                    1ULL << 14,
+                                    1ULL << 15,
+                                    1ULL << 16,
+                                    1ULL << 17,
+                                    1ULL << 18,
+                                    1ULL << 19,
+                                    1ULL << 20,
+                                    1ULL << 21,
+                                    1ULL << 22,
+                                    1ULL << 23,
+                                    1ULL << 24,
+                                    1ULL << 25,
+                                    1ULL << 26,
+                                    1ULL << 27,
+                                    1ULL << 28,
+                                    1ULL << 29,
+                                    1ULL << 30,
+                                    1ULL << 31,
+                                    1ULL << 32,
+                                    1ULL << 33,
+                                    1ULL << 34,
+                                    1ULL << 35,
+                                    1ULL << 36,
+                                    1ULL << 37,
+                                    1ULL << 38,
+                                    1ULL << 39,
+                                    1ULL << 40,
+                                    1ULL << 41,
+                                    1ULL << 42,
+                                    1ULL << 43,
+                                    1ULL << 44,
+                                    1ULL << 45,
+                                    1ULL << 46,
+                                    1ULL << 47,
+                                    1ULL << 48,
+                                    1ULL << 49,
+                                    1ULL << 50,
+                                    1ULL << 51,
+                                    1ULL << 52,
+                                    1ULL << 53,
+                                    1ULL << 54,
+                                    1ULL << 55,
+                                    1ULL << 56,
+                                    1ULL << 57,
+                                    1ULL << 58,
+                                    1ULL << 59,
+                                    1ULL << 60,
+                                    1ULL << 61,
+                                    1ULL << 62,
+                                    1ULL << 63,
                                     };
 
 
@@ -136,7 +138,6 @@ public:
     u64 GenerateMoves(u64 my_bitboard, u64 opp_bitboard);
     void MakeMove(int color, u64 my_move);
     u64 MakeMoveImproved(int color, u64 my_move);
-    //void UnmakeMove(int color, u64 my_move);
     void UnmakeMove(int color, u64 m_move, u64 tiles_to_flip);
     void UndoMove(int color, u64 my_move);
 
@@ -176,9 +177,9 @@ public:
 
     bool IsOnBoard(u64 move);
     bool IsOnCorner(u64 move);
-    std::vector<u64> GetScore();
-    u64 BitboardPopcount(u64 bitboard);
-    u64 BitboardPopcount2(u64 b);
+    std::vector<int> GetScore();
+    int BitboardPopcount(u64 bitboard);
+    int BitboardPopcount2(u64 b);
     void Reset();
     u64 ValidMoves(int color);
     u64 ValidMovesTwo(int color);
@@ -186,19 +187,27 @@ public:
     u64 RandomComputerMove(int color);
     int BitScanForward(u64 bb);
 
-    double EvalBoardSort(int color);
+    double EvalBoardSort(int color, const std::array<int, 65536>& popcount_hash_table);
 
-    double EvalBoard(int move_number, int color);
+    void PrintBitboardToConsole(u64 b);
+    void PrintBoardToConsole();
+
+    double EvalBoard(int move_number, int color, const std::array<int, 65536>& popcount_hash_table);
     void ConvertToBinary(u64 bitboard);
     std::vector<u64> GenPossibleMovesIndicators(u64 possible_moves);
     std::vector<u64> GenPossibleMovesIndicatorsImproved(u64 data);
-    std::vector<ScoreMove> GenPossibleMoveScorePairsOne(const std::vector<u64>& possible_moves_indicators, int color, int move_number);
-    std::vector<ScoreMove> GenPossibleMoveScorePairsTwo(const std::vector<u64>& possible_moves_indicators, int color, int move_number);
-    void OrderMovesByEvalDescending(std::vector<ScoreMove>& possible_move_score_pairs);
+    std::vector<ScoreMove> GenPossibleMoveScorePairsOne(const std::vector<u64>& possible_moves_indicators, 
+        int color, int move_number, const std::array<int, 65536>& popcount_hash_table);
+    std::vector<ScoreMove> GenPossibleMoveScorePairsTwo(const std::vector<u64>& possible_moves_indicators, 
+        int color, int move_number);
+    void OrderMoveScorePairsByEvalDescending(std::vector<ScoreMove>& possible_move_score_pairs);
+    void OrderMovesByEvalDescending(std::vector<u64>& valid_moves);
+
+    bool IsTerminalNode();
     
 private:
-    u64 white_bitboard_ = 0ull;
-    u64 black_bitboard_ = 0ull;
+    u64 white_bitboard_ = 0ULL;
+    u64 black_bitboard_ = 0ULL;
 };
 
 #endif // BOARD_H_

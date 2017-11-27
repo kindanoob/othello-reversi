@@ -12,8 +12,13 @@ Display::Display() {
     settings.antialiasingLevel = kAntialiasingLevel;
     window_ = new sf::RenderWindow(sf::VideoMode(kScreenWidth, kScreenHeight), kScreenTitle, sf::Style::Default, settings);
     window_->setPosition(sf::Vector2i(300, 100));
+    std::cout << "screen width: " << kScreenWidth << ", height: " << kScreenHeight << std::endl;
     is_fullscreen_ = false;
     SetVerticalSync(true);
+
+    //view.setCenter(sf::Vector2f(kScreenWidth / 2, kScreenHeight / 2));
+    //view.setSize(sf::Vector2f(kScreenWidth, kScreenHeight));
+    //window_->setView(view);
 }
 
 Display::~Display() {

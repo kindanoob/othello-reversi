@@ -33,19 +33,32 @@ void OptionsState::Input(Application *app) {
         easy_ai_button_->SetRectShapeFillColor(sf::Color(255, 255, 255));
         medium_ai_button_->SetRectShapeFillColor(sf::Color(255, 255, 255));
         hard_ai_button_->SetRectShapeFillColor(sf::Color(255, 255, 255));
+        analyze_button_->SetRectShapeFillColor(sf::Color(255, 255, 255));
         ai_color_black_button_->SetRectShapeFillColor(sf::Color(255, 255, 255));
         ai_color_white_button_->SetRectShapeFillColor(sf::Color(255, 255, 255));
+        analyze_button_->SetRectShapeFillColor(sf::Color(255, 255, 255));
+        show_valid_moves_button_yes_->SetRectShapeFillColor(sf::Color(255, 255, 255));
+        show_valid_moves_button_no_->SetRectShapeFillColor(sf::Color(255, 255, 255));
         if (app->ai_level_ == AiStrengthLevel::Easy) {
             easy_ai_button_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
         } else if (app->ai_level_ == AiStrengthLevel::Medium) {
             medium_ai_button_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
         } else if (app->ai_level_ == AiStrengthLevel::Hard) {
             hard_ai_button_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
+        } 
+        if (app->engine_mode_ == EngineMode::Play) {
+            if (app->computer_color_ == PieceColor::Black) {
+                ai_color_black_button_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
+            } else if (app->computer_color_ == PieceColor::White) {
+                ai_color_white_button_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
+            }
+        } else if (app->engine_mode_ == EngineMode::Analyze) {
+            analyze_button_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
         }
-        if (app->computer_color_ == PieceColor::Black) {
-          ai_color_black_button_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
+        if (app->show_valid_moves_) {
+            show_valid_moves_button_yes_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
         } else {
-          ai_color_white_button_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
+            show_valid_moves_button_no_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
         }
         auto mouse_position = window_->mapPixelToCoords(sf::Mouse::getPosition(*window_));
         if(BackButton()->RectShape().getGlobalBounds().contains(mouse_position)){
@@ -72,14 +85,33 @@ void OptionsState::Input(Application *app) {
         } else if(ai_color_black_button_->RectShape().getGlobalBounds().contains(mouse_position)){            
             if(sf::Mouse::isButtonPressed(sf::Mouse::Left)){
                 ai_color_black_button_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
+                app->engine_mode_ = EngineMode::Play;
                 app->computer_color_ = PieceColor::Black;
                 app->player_color_ = PieceColor::White;
             }
         } else if(ai_color_white_button_->RectShape().getGlobalBounds().contains(mouse_position)){            
             if(sf::Mouse::isButtonPressed(sf::Mouse::Left)){
                 ai_color_white_button_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
+                app->engine_mode_ = EngineMode::Play;
                 app->computer_color_ = PieceColor::White;
                 app->player_color_ = PieceColor::Black;
+            }
+        } else if(analyze_button_->RectShape().getGlobalBounds().contains(mouse_position)){            
+            if(sf::Mouse::isButtonPressed(sf::Mouse::Left)){
+                analyze_button_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
+                //app->computer_color_ = PieceColor::White;
+                //app->player_color_ = PieceColor::Black;
+                app->engine_mode_ = EngineMode::Analyze;
+            }
+        } else if(show_valid_moves_button_yes_->RectShape().getGlobalBounds().contains(mouse_position)){            
+            if(sf::Mouse::isButtonPressed(sf::Mouse::Left)){
+                show_valid_moves_button_yes_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
+                app->show_valid_moves_ = true;
+            }
+        } else if(show_valid_moves_button_no_->RectShape().getGlobalBounds().contains(mouse_position)){            
+            if(sf::Mouse::isButtonPressed(sf::Mouse::Left)){
+                show_valid_moves_button_no_->SetRectShapeFillColor(kMenuButtonOnSelectColor);
+                app->show_valid_moves_ = false;
             }
         }
         window_->clear(sf::Color(255, 255, 255));        
@@ -92,11 +124,18 @@ void OptionsState::Input(Application *app) {
         window_->draw(medium_ai_button_->ButtonText());
         window_->draw(hard_ai_button_->RectShape());
         window_->draw(hard_ai_button_->ButtonText());
+        window_->draw(analyze_button_->RectShape());
+        window_->draw(analyze_button_->ButtonText());
         window_->draw(choose_ai_color_text_);
         window_->draw(ai_color_black_button_->RectShape());
         window_->draw(ai_color_black_button_->ButtonText());
         window_->draw(ai_color_white_button_->RectShape());
         window_->draw(ai_color_white_button_->ButtonText());
+        window_->draw(show_valid_moves_text_);
+        window_->draw(show_valid_moves_button_yes_->RectShape());
+        window_->draw(show_valid_moves_button_yes_->ButtonText());
+        window_->draw(show_valid_moves_button_no_->RectShape());
+        window_->draw(show_valid_moves_button_no_->ButtonText());
         window_->display();
     }
 }
@@ -111,7 +150,9 @@ void OptionsState::Update(Application *app) {}
 void OptionsState::Draw(Application *app) {}
 
 void OptionsState::CreateFont(Application *app) {
+    //font_ = app->resource_holder_->fonts_->GetResource(FontName::kUbuntuFont);
     font_ = app->resource_holder_->fonts_->GetResource(FontName::kArialFont);
+    //font_ = app->resource_holder_->fonts_->GetResource(FontName::kCyrillicFont);
 }
 
 void OptionsState::Init(Application *app) {
@@ -121,6 +162,8 @@ void OptionsState::Init(Application *app) {
     CreateAiLevelButtons(app);
     CreateAiColorText(app);
     CreateAiColorButtons(app);
+    CreateShowValidMovesColorText(app);
+    CreateShowValidMovesButtons(app);
 }
 
 void OptionsState::CreateBackButton(Application *app) {
@@ -204,6 +247,47 @@ void OptionsState::CreateAiColorButtons(Application *app) {
                               sf::Color(0, 0, 0),
                               font_,
                               "White",
+                              20,
+                              sf::Color(0, 0, 0)
+                              );    
+    analyze_button_ = new Button(sf::Vector2f(80, 40),
+                              sf::Vector2f(425, 150),
+                              sf::Color(255, 255, 255),
+                              3,
+                              sf::Color(0, 0, 0),
+                              font_,
+                              "Analyzes",
+                              20,
+                              sf::Color(0, 0, 0)
+                              );    
+}
+
+void OptionsState::CreateShowValidMovesColorText(Application *app) {
+    show_valid_moves_text_.setFont(font_);
+    show_valid_moves_text_.setCharacterSize(20);
+    show_valid_moves_text_.setString("Show valid moves: ");
+    show_valid_moves_text_.setPosition(sf::Vector2f(60, 260));
+    show_valid_moves_text_.setColor(sf::Color(0, 0, 0));
+}
+
+void OptionsState::CreateShowValidMovesButtons(Application *app) {
+    show_valid_moves_button_yes_ = new Button(sf::Vector2f(80, 40),
+                              sf::Vector2f(225, 250),
+                              sf::Color(255, 255, 255),
+                              3,
+                              sf::Color(0, 0, 0),
+                              font_,
+                              "Yes",
+                              20,
+                              sf::Color(0, 0, 0)
+                              );
+    show_valid_moves_button_no_ = new Button(sf::Vector2f(80, 40),
+                              sf::Vector2f(325, 250),
+                              sf::Color(255, 255, 255),
+                              3,
+                              sf::Color(0, 0, 0),
+                              font_,
+                              "No",
                               20,
                               sf::Color(0, 0, 0)
                               );    

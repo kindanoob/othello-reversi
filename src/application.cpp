@@ -10,10 +10,13 @@
 #include "main_menu_state.h"
 #include "resource_holder.h"
 #include "options_state.h"
+#include "util.h"
+#include "config.h"
 
 
 
 Application::Application(): player_score_(0) {
+    GeneratePopcountHashTable();
     resource_holder_ = new ResourceHolder();
     display_ = new Display();
     main_menu_state_ = new MainMenuState(this);
@@ -66,5 +69,11 @@ void Application::ShowFps() {
 void Application::ResetScores() {
     SetPlayerScore(0);
     SetComputerScore(0);
+}
+
+void Application::GeneratePopcountHashTable() {
+    for (u64 i = 0; i < 65536; ++i) {
+        PopcountHashTable[i] = Util::BitboardPopcount(i);
+    }
 }
 

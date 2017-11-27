@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <stack>
+#include <array>
 
 
 class Display;
@@ -23,6 +24,11 @@ enum class AiStrengthLevel {
 enum class PieceColor {
     Black,
     White
+};
+
+enum class EngineMode {
+    Play,
+    Analyze
 };
 
 class Application {
@@ -52,6 +58,8 @@ public:
     AiStrengthLevel AiLevel() {
         return ai_level_;
     }
+    void GeneratePopcountHashTable();
+
 public:
     Display *display_ = nullptr;
     int fps_count_ = 0;
@@ -66,6 +74,9 @@ public:
     AiStrengthLevel ai_level_ = AiStrengthLevel::Easy;
     PieceColor player_color_ = PieceColor::White;
     PieceColor computer_color_ = PieceColor::Black;
+    EngineMode engine_mode_ = EngineMode::Play;
+    bool show_valid_moves_ = true;
+    std::array<int, 65536> PopcountHashTable;
 
 private:
     

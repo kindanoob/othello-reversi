@@ -181,5 +181,7 @@ const int kTimePerMoveHard = 3000;//in milliseconds
 
 const int kMaxMoveNumber = 81;
 
+//std::array<int, 65536> PopcountHashTable;
+
 #endif // CONFIG_H
 
