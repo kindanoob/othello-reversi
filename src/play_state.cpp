@@ -258,12 +258,11 @@ void PlayState::DrawBoard(Application *app) {
     app->display_->Draw(*BoardRect());
     DrawBoardGrid(app);
     DrawPieces(app);
-    if (app->show_valid_moves_) {
-        DrawValidMoves(app);
-    }
     if (app->engine_mode_ == EngineMode::Analyze) {
         DrawBoardEvals(app);
-    }    
+    } else if (app->show_valid_moves_) {
+        DrawValidMoves(app);
+    }
     DrawScores(app);
     //app->display_->DisplayWindow();
 }
@@ -383,6 +382,7 @@ void PlayState::DrawBoardEvals(Application *app) {
                 board_eval_text.setString(board_eval_string.str());
                 board_eval_text.setColor(sf::Color::Yellow);
                 board_eval_text.setStyle(sf::Text::Style::Bold);
+                board_eval_text.setOrigin(sf::Vector2f(-17, -7));
                 board_eval_text.setPosition(kXMargin + ( 7 - i ) * kSquareSizeInPixels + (kSquareSizeInPixels - 2 * kBoardEvalFontSize) / 2, 
                     kYMargin + (7 - j) * kSquareSizeInPixels + (kSquareSizeInPixels - 2 * kBoardEvalFontSize) / 2);
                 app->display_->Draw(board_eval_text);
