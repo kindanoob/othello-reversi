@@ -1,5 +1,5 @@
 # foompello
-C++ implementation of game of othello (sometimes incorrectly referred as reversi) using SFML
+C++ implementation of game of othello (often mistakenly referred to as "reversi") using SFML
 
 Requirements: 1) C++11, 2) SFML 2.3.2
 
