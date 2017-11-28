@@ -13,7 +13,8 @@ Instructions:
 4) Build the project (e.g. for Unix makefiles it is achieved by typing "make" without quotes in the terminal)
 5) Launch the executable file "foompello"
 6) Choose color of your pieces and AI playing level in the Options menu.
-7) Mouse controls. Click menu buttons with left mouse click. Left mouse click on the board square to make a move.
+7) You can also choose analysis mode. In this mode human player makes moves for both colors. After the move is made foompello shows it's evaluations (on depth 10) for all valid moves. The higher the evaluation the better is the move according to foompello.
+8) Mouse controls. Click menu buttons with left mouse click. Left mouse click on the board square to make a move.
 
 Some concepts used in the project: bitboards, minimax, negamax, alpha beta pruning, principle variation search (PVS), iterative deepening, heuristic evaluation fuction.
 
