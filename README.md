@@ -1,19 +1,21 @@
 # foompello
 C++ implementation of game of othello (sometimes incorrectly referred as reversi) using SFML
 
-Requirements: 1) C++11, 2) SFML 2.4.2
+Requirements: 1) C++11, 2) SFML 2.3.2
 
 The program was tested on Ubuntu 16.04 LTS Xenial, gcc 5.4.0.
 
 
 Instructions:
-1) Update the makefile with the correct location of SFML_DIR (that is, the directory where SFML is located on your computer)
-2) Build the project, using "make" command in the terminal
-3) Launch the executable file "foompello"
-4) Choose color of your pieces and AI playing level in the Options menu.
-5) Mouse controls. Click menu buttons with left mouse click. Left mouse click on the board square to make a move.
+1) For an out-of-place build: create a build directory (mkdir build)
+2) Change directory to the created build directory (cd build)
+3) Create build files with CMake in the build directory (cmake ..)
+4) Build the project (e.g. for Unix makefiles it is achieved by typing "make" without quotes in the terminal)
+5) Launch the executable file "foompello"
+6) Choose color of your pieces and AI playing level in the Options menu.
+7) Mouse controls. Click menu buttons with left mouse click. Left mouse click on the board square to make a move.
 
-Some concepts used in the project: minimax, negamax, alpha beta prunning, principle variation search (PVS), bitboards.
+Some concepts used in the project: bitboards, minimax, negamax, alpha beta pruning, principle variation search (PVS), iterative deepening, heuristic evaluation fuction.
 
 The project is still in the development stage and there are many things yet to be implemented.
 
