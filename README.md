@@ -10,7 +10,7 @@ Instructions:
 1) For an out-of-place build: create a build directory (mkdir build)
 2) Change directory to the created build directory (cd build)
 3) Create build files with CMake in the build directory (cmake ..)
-4) Build the project (e.g. for Unix makefiles it is achieved by typing "make" without quotes in the terminal)
+4) Build the project (e.g. for Unix makefiles it is achieved by using "make" command in the terminal)
 5) Launch the executable file "foompello"
 6) Choose color of your pieces and AI playing level in the Options menu.
 7) You can also choose analysis mode. In this mode human player makes moves for both colors. After the move is made foompello shows it's evaluations (on depth 10) for all valid moves. The higher the evaluation the better is the move according to foompello.
