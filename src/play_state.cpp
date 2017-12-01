@@ -58,7 +58,7 @@ const int kBoardEvalFontSize = kSquareSizeInPixels * 0.35;
 
 
 const int kSearchDepthMedium = 4;
-const int kSearchDepthHard = 10;
+const int kSearchDepthHard = 20;
 const int kShallowSearchDepth = 3;
 
 
@@ -176,8 +176,8 @@ void PlayState::Input(Application *app) {
             if (PassTurnHuman()) {
                 ShowPassTurnWindow(app);
             }
-            //MakeMovePVS(app);
-            MakeMoveNegamaxAB(app);
+            MakeMovePVS(app);
+            //MakeMoveNegamaxAB(app);
         } else {
             PrintMoveHistory();
             ShowFinalScore(app);        
@@ -408,9 +408,14 @@ void PlayState::DecreaseMoveNumber() {
     --move_number_;
 }
 
+void PlayState::SetTimePerMove(int t) {
+    time_per_move_ = t;
+}
+
 int PlayState::TimePerMove() {
     return time_per_move_;
 }
+
 
 void PlayState::SetPassTurnComputer(bool b) {
     pass_turn_computer_ = b;
@@ -420,13 +425,15 @@ void PlayState::SetPassTurnHuman(bool b) {
     pass_turn_human_ = b;
 }
 
-void PrintPrincipalVariation(const Line& principal_variation_curr, int depth) {
+void PlayState::PrintPrincipalVariation(const Line& principal_variation_curr, int depth) {
     std::cerr << "collected principal variation from depth = " << depth << ": ";
     std::cerr << "[";
     for(int j = 0; j < depth - 1; j++) {
-        std::cerr << log(principal_variation_curr.argmove[j]) / log(2) << ", ";
+        //std::cerr << log(principal_variation_curr.argmove[j]) / log(2) << ", ";
+        std::cerr << BitboardToCoordinates()[principal_variation_curr.argmove[j]] << ", ";
     }
-    std::cerr << log(principal_variation_curr.argmove[depth - 1]) / log(2) ;
+    //std::cerr << log(principal_variation_curr.argmove[depth - 1]) / log(2) ;
+    std::cerr << BitboardToCoordinates()[principal_variation_curr.argmove[depth - 1]];
     std::cerr << "]" << std::endl;
     std::cerr << std::endl;
 }
@@ -583,32 +590,28 @@ void PlayState::MakeMovePVS(Application *app) {
         if (ai_level_ == AiStrengthLevel::Easy) {
             computer_move = GetBoard()->RandomComputerMove(computer_color_);
         } else {
-            computer_move = 0ULL;
+            //computer_move = 0ULL;
             Line principal_variation_prev;
             follow_pv_flag_ = false;
             int depth_lower = 1;
-            int depth_upper = 0;
-            if (ai_level_ == AiStrengthLevel::Medium) {
-                depth_upper = kSearchDepthMedium;
-            } else {
-                depth_upper = kSearchDepthHard;
-            }
+            int depth_upper = (ai_level_ == AiStrengthLevel::Medium) ? kSearchDepthMedium : kSearchDepthHard;
+            SetTimePerMove((ai_level_ == AiStrengthLevel::Medium) ? kTimePerMoveMedium : kTimePerMoveHard);
             for(int depth = depth_lower; depth <= depth_upper; ++depth) {
             //for(int depth = 8; depth <= 8; ++depth) {
-                std::cerr << "============================== " << depth << " ==================================" << std::endl;
+                std::cerr << "============================== depth: " << depth << " ==================================" << std::endl;
                 if(depth > depth_lower) {
-                    //follow_pv_flag_ = true;
+                    follow_pv_flag_ = true;
                 }
                 Line principal_variation_curr;
                 computer_move_prev = computer_move;
-                computer_move = RootSearchPvsPv(computer_color_, depth, kNegativeInfinity, kInfinity, move_number_,
+                computer_move = RootSearchPvsPv(computer_color_, depth, -kInfinity, kInfinity, move_number_,
                                                 &principal_variation_prev, &principal_variation_curr, app);
 
                 std::chrono::steady_clock::time_point end_thinking_iteration = std::chrono::steady_clock::now();
                 think_time_ = std::chrono::duration_cast<std::chrono::milliseconds>(end_thinking_iteration - begin_).count();
                 std::cerr << "think time: " << think_time_ << ", depth: " << depth << std::endl;
                 if(timeout_triggered_flag_) {
-                    std::cerr << "iterative deepening stopped on depth = " << depth << std::endl;
+                    std::cerr << "timeout, iterative deepening stopped on depth = " << depth << std::endl;
                     std::cerr << "computer_move: " << computer_move << std::endl;
                     std::cerr << "computer_move_prev: " << computer_move << std::endl;
                     break;
@@ -620,7 +623,7 @@ void PlayState::MakeMovePVS(Application *app) {
                     std::cerr << "computer_move_prev: " << computer_move << std::endl;
                     break;
                 }
-                //PrintPrincipalVariation(principal_variation_curr);                
+                PrintPrincipalVariation(principal_variation_curr, depth);
                 principal_variation_prev = principal_variation_curr;
             }
         }        
@@ -660,43 +663,39 @@ void PlayState::MakeMovePVS(Application *app) {
 
 double PlayState::PvsPv(int color, int depth, int root_depth, double alpha, double beta, int move_number,
                  Line *pline_prev, Line *pline_curr, Application *app) {    
-    std::cerr << "entered PvsPv with color = " << color << 
-        ", depth = " << depth << ", root_depth: " << root_depth << 
-        ", alpha = " << alpha << ", beta = " << beta << std::endl;
+    //std::cerr << "entered PvsPv with color = " << color << 
+        //", depth = " << depth << ", root_depth: " << root_depth << 
+        //", alpha = " << alpha << ", beta = " << beta << std::endl;
     Line line;
     if (depth == 0) {
-        std::cout << "depth 0, return " << GetBoard()->EvalBoard(move_number, color, app->PopcountHashTable) << std::endl;
+        //std::cout << "depth 0, return " << GetBoard()->EvalBoard(move_number, color, app->PopcountHashTable) << std::endl;
         pline_curr->cmove = 0;
         return GetBoard()->EvalBoard(move_number, color, app->PopcountHashTable);
     }
-    if(depth == 1) {
-        follow_pv_flag_ = false;
-    }
+    //if(depth == 1) {
+        //follow_pv_flag_ = false;
+    //}
     u64 possible_moves = GetBoard()->ValidMoves(color);
     if ((possible_moves == 0ULL) && (GetBoard()->ValidMoves(-color) == 0ULL)) {
         pline_curr->cmove = 0;
         return GetBoard()->EvalBoard(move_number, color, app->PopcountHashTable);
     } else {
         if (possible_moves == 0ULL) {
-            return -PvsPv(-color, depth, root_depth, -beta, -alpha, move_number, pline_prev, pline_curr, app);//pline_curr instead of line??????
+            return -PvsPv(-color, depth, root_depth, -beta, -alpha, move_number, pline_prev, pline_curr, app);
         }
         std::vector<u64> possible_moves_indicators = GetBoard()->GenPossibleMovesIndicators(possible_moves);
-        int possible_moves_indicators_size = possible_moves_indicators.size();
-        std::vector<ScoreMove> possible_move_score_pairs = GetBoard()->GenPossibleMoveScorePairsOne(possible_moves_indicators, color, move_number, app->PopcountHashTable);
-        std::sort(possible_move_score_pairs.begin(), possible_move_score_pairs.end(), 
-            [](const ScoreMove& a, const ScoreMove& b) {
-                return a.score > b.score;
-            });
+        std::vector<ScoreMove> possible_move_score_pairs = 
+            GetBoard()->GenPossibleMoveScorePairsOne(possible_moves_indicators, color, move_number, app->PopcountHashTable);
+        
 
-        u64 current_move = 0ULL;
-        u64 tiles_to_flip = 0ULL;
-        bool found_pv = false;
-        double score = 0.0;
-        int pv_index = root_depth - depth;
+        bool found_pv = false;        
+        
+        // put the PV move in the first position of valid moves vector
         if (follow_pv_flag_) {            
+            int pv_index = root_depth - depth;
             if (possible_move_score_pairs[0].move != (pline_prev->argmove[pv_index])) {
                 int pos = 0;//index of the PV move in the valid moves array
-                for (int i = 0; i < possible_moves_indicators_size; i++) {
+                for (size_t i = 0; i < possible_moves_indicators.size(); i++) {
                     if (possible_move_score_pairs[i].move == (pline_prev->argmove[pv_index])) {
                         pos = i;
                         break;
@@ -704,11 +703,16 @@ double PlayState::PvsPv(int color, int depth, int root_depth, double alpha, doub
                 }
                 ScoreMove temp_score_move = possible_move_score_pairs[0];
                 possible_move_score_pairs[0].move = pline_prev->argmove[pv_index];
-                possible_move_score_pairs[0].score = 0;//doesn't matter, just for completeness, this value won't be used
+                possible_move_score_pairs[0].score = possible_move_score_pairs[pos].score;//doesn't matter, just for completeness, this value won't be used
                 possible_move_score_pairs[pos] = temp_score_move;
             }            
         }
-        for (int i = 0; i < possible_moves_indicators_size; i++) {
+        //after the PV move was put at index 0, sort the rest of the moves according to their eval scores
+        std::sort(possible_move_score_pairs.begin() + 1, possible_move_score_pairs.end(), 
+            [](const ScoreMove& a, const ScoreMove& b) {
+                return a.score > b.score;
+            });
+        for (size_t i = 0; i < possible_moves_indicators.size(); i++) {
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             think_time_ = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin_).count();
             if ((think_time_ > TimePerMove())) {
@@ -719,11 +723,11 @@ double PlayState::PvsPv(int color, int depth, int root_depth, double alpha, doub
                 follow_pv_flag_ = false;
             }
 
-            current_move = possible_move_score_pairs[i].move;
-            //std::cout << "made move " << log(current_move) / log(2) << std::endl;
-            std::cout << "made move " << BitboardToCoordinates()[current_move] << std::endl;
+            u64 current_move = possible_move_score_pairs[i].move;
+            //std::cout << "made move " << BitboardToCoordinates()[current_move] << std::endl;
             
-            tiles_to_flip = GetBoard()->MakeMoveImproved(color, current_move);
+            u64 tiles_to_flip = GetBoard()->MakeMoveImproved(color, current_move);
+            double score = 0.0;
             if (found_pv) {
                 score = -PvsPv(-color, depth - 1, root_depth, -alpha - 1, -alpha, move_number + 1, pline_prev, &line, app);
                 if (score > alpha && score < beta) {
@@ -733,8 +737,8 @@ double PlayState::PvsPv(int color, int depth, int root_depth, double alpha, doub
                 score = -PvsPv(-color, depth - 1, root_depth, -beta, -alpha, move_number + 1, pline_prev, &line, app);
             }
             //std::cout << "score: " << score << std::endl;
-            std::cout << "i: " << i << ", return with score " << score <<
-            " for move: " << BitboardToCoordinates()[current_move] << std::endl;
+            //std::cout << "i: " << i << ", return with score " << score <<
+            //" for move: " << BitboardToCoordinates()[current_move] << std::endl;
             GetBoard()->UnmakeMove(color, current_move, tiles_to_flip);
             if (score >= beta) {
                 return beta;
@@ -747,16 +751,16 @@ double PlayState::PvsPv(int color, int depth, int root_depth, double alpha, doub
                 pline_curr->cmove = line.cmove + 1;                
             }
         }
-        std::cout << "returned " << alpha << std::endl;
+        //std::cout << "returned " << alpha << std::endl;
         return alpha;
     }
 }
 
 
-u64 PlayState::RootSearchPvsPv(int color, int depth, double alpha_original, double beta_original, int move_number,
+u64 PlayState::RootSearchPvsPv(int color, int depth, double alpha, double beta, int move_number,
                              Line *pline_prev, Line *pline_curr, Application *app) {
     std::cerr << "AT ROOT entered RootSearchPvsPv with color = " << color << 
-        ", depth = " << depth << ", alpha = " << alpha_original << ", beta = " << beta_original << std::endl;    
+        ", depth = " << depth << ", alpha = " << alpha << ", beta = " << beta << std::endl;    
     //GetBoard()->PrintBoardToConsole();
     Line line;
     u64 possible_moves = GetBoard()->ValidMoves(color);
@@ -765,36 +769,55 @@ u64 PlayState::RootSearchPvsPv(int color, int depth, double alpha_original, doub
     int possible_moves_indicators_size = possible_moves_indicators.size();
     std::vector<ScoreMove> possible_move_score_pairs = 
         GetBoard()->GenPossibleMoveScorePairsOne(possible_moves_indicators, color, move_number, app->PopcountHashTable);
-    std::sort(possible_move_score_pairs.begin(), possible_move_score_pairs.end(), 
-        [](const ScoreMove& a, const ScoreMove& b) {
-            return a.score > b.score;
-        });
 
-
-    if (follow_pv_flag_) {
-        if (possible_move_score_pairs[0].move != (pline_prev->argmove[0])) {
-            int pos = 0;//index of the PV move in the valid moves array
-            for (int i = 0; i < possible_moves_indicators_size; i++) {
-                if (possible_move_score_pairs[i].move == (pline_prev->argmove[0])) {
-                    pos = i;
-                    break;
-                }
-            }
-            ScoreMove temp_score_move = possible_move_score_pairs[0];
-            possible_move_score_pairs[0].move = pline_prev->argmove[0];
-            possible_move_score_pairs[0].score = 0;//doesn't matter, just for completeness, this value won't be used
-            possible_move_score_pairs[pos] = temp_score_move;
-        }
-    }
+    std::cout << "moves before: " << std::endl;
+    for (int i = 0; i < possible_moves_indicators_size; i++) {
+        std::cout << BitboardToCoordinates()[possible_move_score_pairs[i].move] << " : "
+        << possible_move_score_pairs[i].score << std::endl;
+    }    
+    std::cout << std::endl;
+    //std::sort(possible_move_score_pairs.begin(), possible_move_score_pairs.end(), 
+        //[](const ScoreMove& a, const ScoreMove& b) {
+            //return a.score > b.score;
+        //});
     
     bool found_pv = false;    
     u64 best_move = possible_move_score_pairs[0].move;
     double best_score = -kInfinity;
 
-    for (int i = 0; i < possible_moves_indicators_size; i++) {
-        double alpha = alpha_original;
-        double beta = beta_original;
-        double score = 0.0;
+    // put the PV move in the first position of valid moves vector
+    if (follow_pv_flag_) {
+        int pv_index = 0;
+        if (possible_move_score_pairs[0].move != (pline_prev->argmove[pv_index])) {
+            int pos = 0;//index of the PV move in the valid moves array
+            for (size_t i = 0; i < possible_moves_indicators.size(); i++) {
+                if (possible_move_score_pairs[i].move == (pline_prev->argmove[pv_index])) {
+                    pos = i;
+                    break;
+                }
+            }
+            ScoreMove temp_score_move = possible_move_score_pairs[0];
+            possible_move_score_pairs[0].move = pline_prev->argmove[pv_index];
+            possible_move_score_pairs[0].score = possible_move_score_pairs[pos].score;//doesn't matter, just for completeness, this value won't be used
+            possible_move_score_pairs[pos] = temp_score_move;
+        }            
+    }
+    //after the PV move was put at index 0, sort the rest of the moves according to their eval scores
+    std::sort(possible_move_score_pairs.begin() + 1, possible_move_score_pairs.end(), 
+        [](const ScoreMove& a, const ScoreMove& b) {
+            return a.score > b.score;
+        });
+
+    if (follow_pv_flag_) {
+        std::cout << "moves after PV correction: " << std::endl;
+        for (int i = 0; i < possible_moves_indicators_size; i++) {
+            std::cout << BitboardToCoordinates()[possible_move_score_pairs[i].move] << " : " <<
+            possible_move_score_pairs[i].score << std::endl;
+        }    
+    }    
+    std::cout << std::endl;
+
+    for (int i = 0; i < possible_moves_indicators_size; i++) {                
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         //std::cerr << "spent " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " milliseconds thinking on depth " << i << std::endl;
         think_time_ = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin_).count();
@@ -809,11 +832,13 @@ u64 PlayState::RootSearchPvsPv(int color, int depth, double alpha_original, doub
         }
         u64 current_move = possible_move_score_pairs[i].move;        
         u64 tiles_to_flip = GetBoard()->MakeMoveImproved(color, current_move);
+        double score = 0.0;
         std::cout << "AT ROOT made move: " << BitboardToCoordinates()[current_move] << std::endl;
         if (found_pv) {
             std::cout << "PV" << std::endl;
             score = -PvsPv(-color, depth - 1, depth, -alpha - 1, -alpha, move_number + 1, pline_prev, &line, app);
-            std::cout << "PV score: " << score << std::endl;
+            std::cout << "PV score: " << score << ", alpha: " << alpha << ", beta: " <<
+            beta << std::endl;
             if (score > alpha && score < beta) {
                 std::cout << "recalculate" << std::endl;
                 score = -PvsPv(-color, depth - 1, depth, -beta, -alpha, move_number + 1, pline_prev, &line, app);
@@ -823,14 +848,15 @@ u64 PlayState::RootSearchPvsPv(int color, int depth, double alpha_original, doub
             score = -PvsPv(-color, depth - 1, depth, -beta, -alpha, move_number + 1, pline_prev, &line, app);
         }
         std::cout << "AT ROOT i: " << i << ", returned with score " << score <<
-        "for move: " << BitboardToCoordinates()[current_move] << std::endl;
+        " for move: " << BitboardToCoordinates()[current_move] << std::endl;
         //std::cout << "score: " << score << std::endl;
         GetBoard()->UnmakeMove(color, current_move, tiles_to_flip);
-        //if(score >= beta) {
-            //break;
-        //}
+        if (score > alpha) {
+            std::cout << "updated alpha from " << alpha << " to " << score << std::endl;
+            alpha = score;            
+        }
         if (score > best_score) {
-            //alpha = score;
+            std::cout << "updated best_score from " << best_score << " to " << score << std::endl;
             best_score = score;
             best_move = current_move;
             found_pv = true;

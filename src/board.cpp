@@ -12,6 +12,9 @@ const u64 kXSquareCSquareBitboard = kXSquareBitboard | kCSquareBitboard;
 const u64 kExceptXSquaresBitboard = kFullBitboard ^ kXSquareBitboard;
 const u64 kExceptXSquaresCSquaresBitboard = kFullBitboard ^ kXSquareCSquareBitboard;
 
+//value returned when the player is wiped out, should represent a very bad outcome
+const double kWipeoutValue = -1000.0;
+
 
 Board::Board() {
     white_bitboard_ = kInitialWhiteBitboard;
@@ -94,11 +97,11 @@ double Board::EvalBoard(int move_number, int color, const std::array<int, 65536>
     int total_count_white = Util::BitboardPopcountHashTable(white_bitboard_, popcount_hash_table);
     if (color == 1) {
         if (total_count_black == 0) {
-            return -kInfinity;
+            return kWipeoutValue;
         }
     } else {
         if (total_count_white == 0) {
-            return -kInfinity;
+            return kWipeoutValue;
         }
     }
 
@@ -166,9 +169,7 @@ double Board::EvalBoard(int move_number, int color, const std::array<int, 65536>
 
 double Board::EvalBoardSort(int color, const std::array<int, 65536>& popcount_hash_table) {
     u64 empty = Empty();
-        //u64 occupied = Occupied();
-        //double delta = 1 - move_number / 64.0;
-
+        
         int corners_black = Util::BitboardPopcountHashTable(black_bitboard_ & kCornerBitboard, popcount_hash_table);
         int corners_white = Util::BitboardPopcountHashTable(white_bitboard_ & kCornerBitboard, popcount_hash_table);
         double corner_heuristic = 16 * (corners_black - corners_white);
@@ -187,12 +188,13 @@ double Board::EvalBoardSort(int color, const std::array<int, 65536>& popcount_ha
         int num_adjacent_white = Util::BitboardPopcountHashTable(adjacent_white, popcount_hash_table);
         double potential_mobility_heuristic = 2 * (num_adjacent_white - num_adjacent_black);
 
-    //int valid_moves_black = ValidMoves(1);
-    //int valid_moves_white = ValidMoves(-1);
-    //double mobility_heuristic = 2 * (valid_moves_black - valid_moves_white);    
+    u64 valid_moves_black = ValidMoves(1);
+    u64 valid_moves_white = ValidMoves(-1);
+    double mobility_heuristic = 2 * (Util::BitboardPopcountHashTable(valid_moves_black, popcount_hash_table) - 
+      Util::BitboardPopcountHashTable(valid_moves_white, popcount_hash_table));    
     //double mobility_heuristic = 0.0;
     
-    return color * (potential_mobility_heuristic + corner_heuristic);
+    return color * (potential_mobility_heuristic + corner_heuristic + mobility_heuristic);
             //+ xsquare_heuristic + c_square_heuristic);
 }
 
@@ -219,16 +221,19 @@ std::vector<ScoreMove> Board::GenPossibleMoveScorePairsOne(const std::vector<u64
                                                            int color,
                                                            int move_number,
                                                            const std::array<int, 65536>& popcount_hash_table) {
+    //std::cout << "in GenPossibleMoveScorePairsOne()" << std::endl;
     std::vector<ScoreMove> possible_move_score_pairs;
     possible_move_score_pairs.reserve(64);
     for (size_t i = 0; i < possible_moves_indicators.size(); i++) {
         u64 current_move = possible_moves_indicators[i];
         u64 tiles_to_flip = MakeMoveImproved(color, current_move);
         ScoreMove temp_score_move(current_move, EvalBoardSort(color, popcount_hash_table));
+        //ScoreMove temp_score_move(current_move, EvalBoardSort(color));
         //temp_score_move.move = current_move;
         //temp_score_move.score = EvalBoardSort(color);
         UnmakeMove(color, current_move, tiles_to_flip);
         possible_move_score_pairs.emplace_back(temp_score_move);
+        //std::cout << "move: " << current_move << ", score: " << EvalBoardSort(color, popcount_hash_table) << std::endl;
     }
     return possible_move_score_pairs;
 }
@@ -617,67 +622,91 @@ u64 Board::ValidMovesImproved(int color) {
 
 void Board::MakeMove(int color, u64 my_move) {
     u64 result = 0ULL;
-    u64 * my_pieces = 0ULL;
-    u64 * opp_pieces = 0ULL;
+    u64 my_pieces = 0ULL;
+    u64 opp_pieces = 0ULL;
     if (color == -1) {
-        my_pieces = &white_bitboard_;
-        opp_pieces = &black_bitboard_;
+        my_pieces = white_bitboard_;
+        opp_pieces = black_bitboard_;
     } else if (color == 1) {
-        my_pieces = &black_bitboard_;
-        opp_pieces = &white_bitboard_;
+        my_pieces = black_bitboard_;
+        opp_pieces = white_bitboard_;
     }
 
-    u64 tiles_to_flip = North(my_move) & (*opp_pieces);
+    u64 tiles_to_flip = North(my_move) & opp_pieces;
+    for (int i = 0; i < 5; ++i) {
+        tiles_to_flip |= North(tiles_to_flip) & opp_pieces;
+    }        
+    if ( (North(tiles_to_flip) & my_pieces) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
+
+    tiles_to_flip = South(my_move) & opp_pieces;
+    for (int i = 0; i < 5; ++i) {        
+        tiles_to_flip |= South(tiles_to_flip) & opp_pieces;
+    }
+    if ( (South(tiles_to_flip) & my_pieces) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
+
+    tiles_to_flip = East(my_move) & opp_pieces;
+    for (int i = 0; i < 5; ++i) {
+        tiles_to_flip |= East(tiles_to_flip) & opp_pieces;
+    }
+    if ( (East(tiles_to_flip) & my_pieces) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
+
+    tiles_to_flip = West(my_move) & opp_pieces;
+    for (int i = 0; i < 5; ++i) {        
+        tiles_to_flip |= West(tiles_to_flip) & opp_pieces;
+    }
+    if ( (West(tiles_to_flip) & my_pieces) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
+
+    tiles_to_flip = NorthEast(my_move) & opp_pieces;
+    for (int i = 0; i < 5; ++i) {
+        tiles_to_flip |= NorthEast(tiles_to_flip) & opp_pieces;
+    }
+    if ( (NorthEast(tiles_to_flip) & my_pieces) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
+
+    tiles_to_flip = NorthWest(my_move) & opp_pieces;
     for (int i = 0; i < 5; ++i)
-        tiles_to_flip |= North(tiles_to_flip) & (*opp_pieces);
-    //result |= (tiles_to_flip & (N(tiles_to_flip) & (*my_pieces)));
-    if ( (North(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
+        tiles_to_flip |= NorthWest(tiles_to_flip) & opp_pieces;
+    if ( (NorthWest(tiles_to_flip) & my_pieces) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
 
-    tiles_to_flip = South(my_move) & (*opp_pieces);
-    for (int i=0; i<5; ++i)
-        tiles_to_flip |= South(tiles_to_flip) & (*opp_pieces);
-    //result |= (tiles_to_flip & (S(tiles_to_flip) & (*my_pieces)));
-    if ( (South(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
+    tiles_to_flip = SouthEast(my_move) & opp_pieces;
+    for (int i = 0; i < 5; ++i) {
+        tiles_to_flip |= SouthEast(tiles_to_flip) & opp_pieces;
+    }
+    if ( (SouthEast(tiles_to_flip) & my_pieces) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
 
-    tiles_to_flip = East(my_move) & (*opp_pieces);
-    for (int i=0; i<5; ++i)
-        tiles_to_flip |= East(tiles_to_flip) & (*opp_pieces);
-    //result |= (tiles_to_flip & (E(tiles_to_flip) & (*my_pieces)));
-    if ( (East(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
+    tiles_to_flip = SouthWest(my_move) & opp_pieces;
+    for (int i = 0; i < 5; ++i) {
+        tiles_to_flip |= SouthWest(tiles_to_flip) & opp_pieces;
+    }
+    if ( (SouthWest(tiles_to_flip) & my_pieces) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
 
-    tiles_to_flip = West(my_move) & (*opp_pieces);
-    for (int i=0; i<5; ++i)
-        tiles_to_flip |= West(tiles_to_flip) & (*opp_pieces);
-    //result |= (tiles_to_flip & (W(tiles_to_flip) & (*my_pieces)));
-    if ( (West(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
+    
+    my_pieces |= result;
+    my_pieces |= my_move;
+    opp_pieces ^= result;
 
-    tiles_to_flip = NorthEast(my_move) & (*opp_pieces);
-    for (int i=0; i<5; ++i)
-        tiles_to_flip |= NorthEast(tiles_to_flip) & (*opp_pieces);
-    //result |= (tiles_to_flip & (NE(tiles_to_flip) & (*my_pieces)));
-    if ( (NorthEast(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
-
-    tiles_to_flip = NorthWest(my_move) & (*opp_pieces);
-    for (int i=0; i<5; ++i)
-        tiles_to_flip |= NorthWest(tiles_to_flip) & (*opp_pieces);
-    //result |= (tiles_to_flip & (NW(tiles_to_flip) & (*my_pieces)));
-    if ( (NorthWest(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
-
-    tiles_to_flip = SouthEast(my_move) & (*opp_pieces);
-    for (int i=0; i<5; ++i)
-        tiles_to_flip |= SouthEast(tiles_to_flip) & (*opp_pieces);
-    //result |= (tiles_to_flip & (SE(tiles_to_flip) & (*my_pieces)));
-    if ( (SouthEast(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
-
-    tiles_to_flip = SouthWest(my_move) & (*opp_pieces);
-    for (int i=0; i<5; ++i)
-        tiles_to_flip |= SouthWest(tiles_to_flip) & (*opp_pieces);
-    //result |= (tiles_to_flip & (SW(tiles_to_flip) & (*my_pieces)));
-    if ( (SouthWest(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
-
-    *my_pieces |= result;
-    *my_pieces |= my_move;
-    *opp_pieces ^= result;
+    if (color == 1) {
+        white_bitboard_ = my_pieces;
+        black_bitboard_ = opp_pieces;
+    } else {
+        white_bitboard_ = opp_pieces;
+        black_bitboard_ = my_pieces;
+    }
 }
 
 u64 Board::MakeMoveImproved(int color, u64 my_move) {
@@ -720,7 +749,9 @@ u64 Board::MakeMoveImproved(int color, u64 my_move) {
         tiles_to_flip |= West(frontier) & (*opp_pieces);
         frontier = West(frontier) & (*opp_pieces);
     }
-    if ( (West(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
+    if ( (West(tiles_to_flip) & (*my_pieces)) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
 
 
 
@@ -730,7 +761,9 @@ u64 Board::MakeMoveImproved(int color, u64 my_move) {
         tiles_to_flip |= East(frontier) & (*opp_pieces);
         frontier = East(frontier) & (*opp_pieces);
     }
-    if ( (East(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
+    if ( (East(tiles_to_flip) & (*my_pieces)) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
 
 
 
@@ -741,7 +774,9 @@ u64 Board::MakeMoveImproved(int color, u64 my_move) {
         tiles_to_flip |= SouthEast(frontier) & (*opp_pieces);
         frontier = SouthEast(frontier) & (*opp_pieces);
     }
-    if ( (SouthEast(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
+    if ( (SouthEast(tiles_to_flip) & (*my_pieces)) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
 
 
 
@@ -751,7 +786,9 @@ u64 Board::MakeMoveImproved(int color, u64 my_move) {
         tiles_to_flip |= SouthWest(frontier) & (*opp_pieces);
         frontier = SouthWest(frontier) & (*opp_pieces);
     }
-    if ( (SouthWest(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
+    if ( (SouthWest(tiles_to_flip) & (*my_pieces)) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
 
 
 
@@ -761,7 +798,9 @@ u64 Board::MakeMoveImproved(int color, u64 my_move) {
         tiles_to_flip |= NorthEast(frontier) & (*opp_pieces);
         frontier = NorthEast(frontier) & (*opp_pieces);
     }
-    if ( (NorthEast(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
+    if ( (NorthEast(tiles_to_flip) & (*my_pieces)) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
 
 
     frontier = NorthWest(my_move) & (*opp_pieces);
@@ -770,7 +809,9 @@ u64 Board::MakeMoveImproved(int color, u64 my_move) {
         tiles_to_flip |= NorthWest(frontier) & (*opp_pieces);
         frontier = NorthWest(frontier) & (*opp_pieces);
     }
-    if ( (NorthWest(tiles_to_flip) & (*my_pieces)) != 0ULL ) { result |= tiles_to_flip; }
+    if ( (NorthWest(tiles_to_flip) & (*my_pieces)) != 0ULL ) {
+        result |= tiles_to_flip;
+    }
 
     *opp_pieces ^= result;
     *my_pieces |= (result | my_move);
@@ -799,9 +840,6 @@ std::vector<u64> CreateIndicatorBitboard() {
     return indicator_bitboard;
 }
 
-//std::string BitboardToString(u64 b) {
-    //return 
-//}
 
 bool Board::IsTerminalNode() {
     return (ValidMoves(1) == 0ULL) && (ValidMoves(-1) == 0ULL);
