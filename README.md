@@ -21,6 +21,6 @@ Some concepts used in the project: bitboards, minimax, negamax, alpha beta pruni
 
 The project is still in the development stage and there are many things yet to be implemented.
 
-The name of the program is a tribute to Ben Seeley (aka foompy_katt) - person who was (and still is) an inspiration for me (and many other othello players around the world).
+The name of the program is a tribute to Ben Seeley (aka foompy_katt) - person is an inspiration for me (and many other othello players around the World).
 
 To learn more about game of othello please refer to the following wikipedia article: https://en.wikipedia.org/wiki/Reversi
