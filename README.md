@@ -19,7 +19,7 @@ Instructions:
 
 Foompello uses bitboards for board representation and move generation. Computer move search algorithm is based on Principal variation search with iterative deepening. Heuristic evaluation fuction is handcrafted and reflects major strategical principles used by strong human players (number of corner discs, numbers of x-square discs, mobility, potential mobility etc.).
 
-Currently playing strength of Foompello is above human beginner level and below human expert level. I hope it give a tough fight to experienced human players who don't consider themselves experts. Also note that currently Foompello is much weaker than strongest othello programs like Edax, WZebra and Ntest.
+Currently playing strength of Foompello is above human beginner level and below human expert level. I hope it can give a tough fight to experienced human players who don't consider themselves experts. Also note that currently Foompello is much weaker than strongest othello programs like Edax, WZebra and Ntest which can defeat human expert players easily.
 
 The project is still in the development stage and there are many things yet to be implemented.
 
