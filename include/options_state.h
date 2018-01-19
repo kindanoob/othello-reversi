@@ -4,7 +4,6 @@
 #include <SFML/Graphics.hpp>
 
 #include "game_state.h"
-//#include "button.h"
 
 
 
@@ -51,7 +50,6 @@ private:
     Button *show_valid_moves_button_yes_ = nullptr;
     Button *show_valid_moves_button_no_ = nullptr;
     sf::Text choose_ai_color_text_;
-    //std::string choose_ai_level_string_ = "Choose AI level: ";
     sf::Text choose_ai_level_text_;
     sf::Text show_valid_moves_text_;
     sf::Font font_;

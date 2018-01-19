@@ -26,7 +26,6 @@ public:
     void InitEntities();
     void Init();
     Button *NewGameButton(){
-        //std::cout << "in NewGameButton(), return " << new_game_button_ << std::endl;
         return new_game_button_;
     }
     Button *OptionsButton(){

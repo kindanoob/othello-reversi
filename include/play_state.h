@@ -11,7 +11,6 @@
 
 #include "game_state.h"
 #include "util.h"
-//#include "board.h"
 
 
 
@@ -124,8 +123,9 @@ private:
     std::vector<std::string> move_history_;
     std::unordered_map<u64, double> board_eval_memo_; //is used for board evaluation scores
     bool finished_analysis_ = false; // is used in analyze mode
-    std::unordered_map<int, std::vector<u64>> killer_moves_ump; // contains vector of killer moves 
-    // (those moves that produced a beta cutoff) for each depth
+    
+    //Contains vector of killer moves (those moves that produced a beta cutoff) for each depth
+    std::unordered_map<int, std::vector<u64>> killer_moves_ump; 
     
 };
 
