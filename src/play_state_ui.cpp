@@ -1,5 +1,20 @@
-#include "play_state.h"
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <chrono>
+#include <cstring>//is required for memcpy
 
+#include "application.h"
+#include "display.h"
+#include "play_state.h"
+#include "font_manager.h"
+#include "resource_holder.h"
+#include "board.h"
+#include "button.h"
+
+
+const int kBoardEvalPrecision = 2;
+const int kBoardEvalFontSize = kSquareSizeInPixels * 0.35;
 
 void PlayState::DrawBoard(Application *app) {        
     app->display_->Draw(*BoardRect());

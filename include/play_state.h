@@ -25,6 +25,7 @@ enum class SideToMove {
     Computer
 };
 
+
 class PlayState: public GameState {
 public:    
     PlayState(Application *app);
