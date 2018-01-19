@@ -50,10 +50,6 @@ const sf::Color kPassTurnWindowOkButtonDefaultColor = sf::Color(255, 255, 255);
 //const int kPassTurnOkButtonPositionY = (kGameIsOverWindowHeight - kGameIsOverOkButtonHeight) * 0.75;
 //const sf::Vector2f kPassTurnOkButtonPosition = sf::Vector2f(kGameIsOverOkButtonPositionX, kGameIsOverOkButtonPositionY);
 
-const int kBoardEvalPrecision = 2;
-const int kBoardEvalFontSize = kSquareSizeInPixels * 0.35;
-
-
 const int kSearchDepthMedium = 4;
 const int kSearchDepthHard = 20;
 const int kShallowSearchDepth = 3;
