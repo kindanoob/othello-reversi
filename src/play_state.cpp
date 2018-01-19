@@ -7,14 +7,11 @@
 #include "application.h"
 #include "display.h"
 #include "play_state.h"
-//#include "game_over_state.h"
 #include "font_manager.h"
 #include "resource_holder.h"
 #include "board.h"
 #include "button.h"
-//#include "util.h"
 
-//std::unordered_map<u64, std::string> bitboard_to_coordinates = gen_bitboard_to_coordinates();
 
 //PassTurn window
 const int kPassTurnWindowWidth = 200;
@@ -75,10 +72,6 @@ struct Line {
 
 
 PlayState::PlayState(Application *app): GameState(app) {
-    //std::cout << "PopcountHashTable: " << std::endl;
-    //for (int i = 0; i < 20; ++i) {
-        //std::cout << app->PopcountHashTable[i] << std::endl;
-    //}
     board_ = new Board();
     //RunPerftTest();
 };
@@ -99,14 +92,10 @@ void PlayState::SwitchSideToMove() {
 }
 
 void PlayState::GenerateBitboardToCoordinates() {
-    //std::cout << "in GenerateBitboardToCoordinates: " << std::endl;
     for (int i = 0; i < 64; i++) {
         BitboardToCoordinates()[1ULL << i] = kBoardCoordinates[i];
     }
     BitboardToCoordinates()[0] = "pass";
-    //for (const auto& p : BitboardToCoordinates()) {
-        //std::cout << BitboardToCoordinates()[1ULL << i] = kBoardCoordinates[i];
-    //}
 }
 
 std::unordered_map<u64, std::string>& PlayState::BitboardToCoordinates() {
@@ -119,7 +108,6 @@ void PlayState::SetAiStrengthLevel(Application *app) {
 
 ///is called right after PlayState is pushed onto the stack
 void PlayState::Init(Application *app){
-    //std::cout << "IN APP INIT" << std::endl;
     if (app->engine_mode_ == EngineMode::Play) {
         SetAiStrengthLevel(app);
         if (ai_level_ == AiStrengthLevel::Medium) {
@@ -283,10 +271,8 @@ void PlayState::PrintPrincipalVariation(const Line& principal_variation_curr, in
     std::cerr << "collected principal variation from depth = " << depth << ": ";
     std::cerr << "[";
     for(int j = 0; j < depth - 1; j++) {
-        //std::cerr << log(principal_variation_curr.argmove[j]) / log(2) << ", ";
         std::cerr << BitboardToCoordinates()[principal_variation_curr.argmove[j]] << ", ";
     }
-    //std::cerr << log(principal_variation_curr.argmove[depth - 1]) / log(2) ;
     std::cerr << BitboardToCoordinates()[principal_variation_curr.argmove[depth - 1]];
     std::cerr << "]" << std::endl;
     std::cerr << std::endl;
@@ -295,7 +281,7 @@ void PlayState::PrintPrincipalVariation(const Line& principal_variation_curr, in
 
 void PlayState::AddMoveToHistory(u64 current_move) {
     move_history_.emplace_back(BitboardToCoordinates()[current_move]);
-    //std::cout << "added move " << move_history_.back() << std::endl;
+    std::cout << "added move " << move_history_.back() << std::endl;
 }
 
 
@@ -444,14 +430,12 @@ void PlayState::MakeMovePVS(Application *app) {
         if (ai_level_ == AiStrengthLevel::Easy) {
             computer_move = GetBoard()->RandomComputerMove(computer_color_);
         } else {
-            //computer_move = 0ULL;
             Line principal_variation_prev;
             follow_pv_flag_ = false;
             int depth_lower = 1;
             int depth_upper = (ai_level_ == AiStrengthLevel::Medium) ? kSearchDepthMedium : kSearchDepthHard;
             SetTimePerMove((ai_level_ == AiStrengthLevel::Medium) ? kTimePerMoveMedium : kTimePerMoveHard);
             for(int depth = depth_lower; depth <= depth_upper; ++depth) {
-            //for(int depth = 8; depth <= 8; ++depth) {
                 std::cerr << "============================== depth: " << depth << " ==================================" << std::endl;
                 if(depth > depth_lower) {
                     follow_pv_flag_ = true;
@@ -517,12 +501,8 @@ void PlayState::MakeMovePVS(Application *app) {
 
 double PlayState::PvsPv(int color, int depth, int root_depth, double alpha, double beta, int move_number,
                  Line *pline_prev, Line *pline_curr, Application *app) {    
-    //std::cerr << "entered PvsPv with color = " << color << 
-        //", depth = " << depth << ", root_depth: " << root_depth << 
-        //", alpha = " << alpha << ", beta = " << beta << std::endl;
     Line line;
     if (depth == 0) {
-        //std::cout << "depth 0, return " << GetBoard()->EvalBoard(move_number, color, app->PopcountHashTable) << std::endl;
         pline_curr->cmove = 0;
         return GetBoard()->EvalBoard(move_number, color, app->PopcountHashTable);
     }
@@ -578,7 +558,6 @@ double PlayState::PvsPv(int color, int depth, int root_depth, double alpha, doub
             }
 
             u64 current_move = possible_move_score_pairs[i].move;
-            //std::cout << "made move " << BitboardToCoordinates()[current_move] << std::endl;
             
             u64 tiles_to_flip = GetBoard()->MakeMoveImproved(color, current_move);
             double score = 0.0;
@@ -590,9 +569,6 @@ double PlayState::PvsPv(int color, int depth, int root_depth, double alpha, doub
             } else {
                 score = -PvsPv(-color, depth - 1, root_depth, -beta, -alpha, move_number + 1, pline_prev, &line, app);
             }
-            //std::cout << "score: " << score << std::endl;
-            //std::cout << "i: " << i << ", return with score " << score <<
-            //" for move: " << BitboardToCoordinates()[current_move] << std::endl;
             GetBoard()->UnmakeMove(color, current_move, tiles_to_flip);
             if (score >= beta) {
                 return beta;
@@ -605,7 +581,6 @@ double PlayState::PvsPv(int color, int depth, int root_depth, double alpha, doub
                 pline_curr->cmove = line.cmove + 1;                
             }
         }
-        //std::cout << "returned " << alpha << std::endl;
         return alpha;
     }
 }
@@ -727,14 +702,8 @@ u64 PlayState::RootSearchPvsPv(int color, int depth, double alpha, double beta, 
 
 u64 PlayState::RootNegamaxAB(int color, int depth, double alpha, double beta, int move_number,
     Application *app) {
-    //std::cout << "AT ROOT entered RootNegamaxAB with color " << color << ", depth: " << depth << 
-    //", move_number: " << move_number << ", alpha: " << alpha << ", beta: " << beta << std::endl;
     u64 possible_moves = GetBoard()->ValidMoves(color);
     std::vector<u64> possible_moves_indicators = GetBoard()->GenPossibleMovesIndicators(possible_moves);
-    //std::vector<ScoreMove> possible_move_score_pairs = 
-        //GetBoard()->GenPossibleMoveScorePairsOne(possible_moves_indicators, color, move_number);
-    //GetBoard()->OrderMoveScorePairsByEvalDescending(possible_move_score_pairs);
-    //OrderMovesByShallowSearch(possible_moves_indicators, color, move_number);
     std::vector<ScoreMove> possible_move_score_pairs = 
         OrderMovesByShallowSearch(possible_moves_indicators, color, move_number, app);
     std::cout << "AT ROOT, moves after sort: " << std::endl;
@@ -746,10 +715,7 @@ u64 PlayState::RootNegamaxAB(int color, int depth, double alpha, double beta, in
     for (size_t i = 0; i < possible_moves_indicators.size(); i++) {
         u64 current_move = possible_move_score_pairs[i].move;
         u64 tiles_to_flip = GetBoard()->MakeMoveImproved(color, current_move);
-        //std::cout << "AT ROOT made move " << BitboardToCoordinates()[current_move] << std::endl;
         double current_score = -NegamaxAB(-color, depth - 1, depth - 1, -beta, -alpha, move_number + 1, app);
-        //std::cout << "AT ROOT returned with score: " << current_score << " for move: " << 
-            //BitboardToCoordinates()[current_move] << std::endl;
         board_eval_memo_[current_move] = current_score;
         GetBoard()->UnmakeMove(color, current_move, tiles_to_flip);
         if (current_score > best_score) {
@@ -767,21 +733,14 @@ u64 PlayState::RootNegamaxAB(int color, int depth, double alpha, double beta, in
 //**************************************************
 std::vector<ScoreMove> PlayState::OrderMovesByShallowSearch(const std::vector<u64>& valid_moves_indicators, 
     int color, int move_number, Application *app) {
-    //std::cout << "in OrderMovesByShallowSearch " << std::endl;
     std::vector<ScoreMove> move_score_pairs;
     for (u64 current_move : valid_moves_indicators) {        
         u64 tiles_to_flip = GetBoard()->MakeMoveImproved(color, current_move);
         double current_score = -NegamaxAB(-color, kShallowSearchDepth, 
             kShallowSearchDepth, -kInfinity, kInfinity, move_number, app);
         GetBoard()->UnmakeMove(color, current_move, tiles_to_flip);
-        //std::cout << "current_move: " << BitboardToCoordinates()[current_move] << 
-        //", current_score: " << current_score << std::endl;
         move_score_pairs.push_back(ScoreMove(current_move, current_score));
     }
-    //std::cout << "Q" << std::endl;
-    //for (const auto& p : move_score_pairs) {
-        //std::cout << p.move << " : " << p.score << std::endl;
-    //}
     std::sort(begin(move_score_pairs), end(move_score_pairs),
         [](const ScoreMove& a, const ScoreMove& b) {
             return a.score > b.score;
@@ -834,7 +793,6 @@ int PlayState::GetWhiteScore() {
 }
 
 void PlayState::ShowFinalScore(Application *app) {
-    //std::cout << "in ShowFinalScore " << std::endl;
     sf::Text final_score_text;
     final_score_text.setFont(font_);
     final_score_text.setCharacterSize(kGameIsOverWindowFinalScoreTextCharacterSize);
@@ -880,7 +838,6 @@ void PlayState::ShowFinalScore(Application *app) {
         final_score_window_->draw(game_is_over_ok_button_->ButtonText());
         final_score_window_->display();
     }
-    //std::cout << "out ShowFinalScore " << std::endl;
 }
 
 void PlayState::InitGameIsOverOkButton() {
