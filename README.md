@@ -17,10 +17,12 @@ Instructions:
 7) You can also choose analysis mode. In this mode human player makes moves for both colors. After the move is made foompello shows it's evaluations (on depth 10) for all valid moves. The higher the evaluation the better is the move according to foompello.
 8) Mouse controls. Click menu buttons with left mouse click. Left mouse click on the board square to make a move.
 
-Some concepts used in the project: bitboards, minimax, negamax, alpha beta pruning, principle variation search (PVS), iterative deepening, heuristic evaluation fuction.
+Foompello uses bitboards for board representation and move generation. Computer move search algorithm is based on negamax with alpha-beta pruning and iterative deepening. Heuristic evaluation fuction is handcrafted and reflects major strategical principles used by strong human players (number of corner discs, numbers of x-square discs, mobility, potential mobility etc.).
+
+Currently playing strength of Foompello is above human beginner level and below human expert level. I hope it give a tough fight to experienced human players who don't consider themselves experts. Also note that currently Foompello is much weaker than strongest othello programs like Edax, WZebra and Ntest.
 
 The project is still in the development stage and there are many things yet to be implemented.
 
-The name of the program is a tribute to Ben Seeley (aka foompy_katt) - person is an inspiration for me (and many other othello players around the World).
+The name of the program is a tribute to Ben Seeley (aka foompy_katt) - person who is an inspiration for me (and many other othello players around the World).
 
 To learn more about game of othello please refer to the following wikipedia article: https://en.wikipedia.org/wiki/Reversi
