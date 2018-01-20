@@ -1,5 +1,6 @@
 # foompello
-Foompello is a C++ implementation of game of othello (often mistakenly referred to as "reversi") using SFML
+![Foompello_screenshot](resources/foompello.png?raw=true "Foompello")
+Foompello is a C++ implementation of game of othello (often mistakenly called "reversi") using SFML
 
 
 Requirements: 1) C++11, 2) SFML 2.3.2
