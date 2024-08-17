@@ -184,7 +184,7 @@ void OptionsState::CreateChooseAiLevelText(Application *app) {
     choose_ai_level_text_.setCharacterSize(20);
     choose_ai_level_text_.setString("Choose AI level: ");
     choose_ai_level_text_.setPosition(sf::Vector2f(60, 60));
-    choose_ai_level_text_.setColor(sf::Color(0, 0, 0));
+    choose_ai_level_text_.setFillColor(sf::Color(0, 0, 0));
 }
 
 void OptionsState::CreateAiLevelButtons(Application *app) {
@@ -226,7 +226,7 @@ void OptionsState::CreateAiColorText(Application *app) {
     choose_ai_color_text_.setCharacterSize(20);
     choose_ai_color_text_.setString("Foompello plays: ");
     choose_ai_color_text_.setPosition(sf::Vector2f(60, 160));
-    choose_ai_color_text_.setColor(sf::Color(0, 0, 0));
+    choose_ai_color_text_.setFillColor(sf::Color(0, 0, 0));
 }
 
 void OptionsState::CreateAiColorButtons(Application *app) {
@@ -267,7 +267,7 @@ void OptionsState::CreateShowValidMovesColorText(Application *app) {
     show_valid_moves_text_.setCharacterSize(20);
     show_valid_moves_text_.setString("Show valid moves: ");
     show_valid_moves_text_.setPosition(sf::Vector2f(60, 260));
-    show_valid_moves_text_.setColor(sf::Color(0, 0, 0));
+    show_valid_moves_text_.setFillColor(sf::Color(0, 0, 0));
 }
 
 void OptionsState::CreateShowValidMovesButtons(Application *app) {

@@ -31,7 +31,7 @@ Button::Button(const sf::Vector2f& rect_shape_size,
     button_text_.setOrigin(sf::Vector2f(text_rect.width / 2, text_rect.height / 2));
 
     button_text_.setPosition(rect_shape_position + sf::Vector2f(button_rect.width / 2, button_rect.height / 2));
-    button_text_.setColor(text_color);
+    button_text_.setFillColor(text_color);
 
 }
 

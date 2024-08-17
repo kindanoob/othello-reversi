@@ -110,8 +110,8 @@ void PlayState::DrawValidMoves(Application *app) {
 void PlayState::DrawScores(Application *app) {
     sf::Text black_score_text("", font_, kScoreFontSize);
     sf::Text white_score_text("", font_, kScoreFontSize);
-    black_score_text.setColor(sf::Color::Black);
-    white_score_text.setColor(sf::Color::Black);
+    black_score_text.setFillColor(sf::Color::Black);
+    white_score_text.setFillColor(sf::Color::Black);
 
     int black_score = GetBlackScore();
     int white_score = GetWhiteScore();
@@ -142,7 +142,7 @@ void PlayState::DrawBoardEvals(Application *app) {
                     board_eval_string << "?";
                 }
                 board_eval_text.setString(board_eval_string.str());
-                board_eval_text.setColor(sf::Color::Yellow);
+                board_eval_text.setFillColor(sf::Color::Yellow);
                 board_eval_text.setStyle(sf::Text::Style::Bold);
                 board_eval_text.setOrigin(sf::Vector2f(-17, -7));
                 board_eval_text.setPosition(kXMargin + ( 7 - i ) * kSquareSizeInPixels + (kSquareSizeInPixels - 2 * kBoardEvalFontSize) / 2, 

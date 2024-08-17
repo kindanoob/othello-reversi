@@ -141,13 +141,13 @@ void PlayState::Init(Application *app){
     for (int j = 0; j < kBoardHeight; ++j) {
         num_text[j].setFont(font_);
         num_text[j].setCharacterSize(text_size);
-        num_text[j].setColor(sf::Color::Black);
+        num_text[j].setFillColor(sf::Color::Black);
         num_text[j].setString(num_array[j]);
         num_text[j].setPosition(kXMargin - text_size * 4 / 5,
                              kYMargin + kSquareSizeInPixels * j + (kSquareSizeInPixels - text_size) / 2);
         letter_text[j].setFont(font_);
         letter_text[j].setCharacterSize(text_size);
-        letter_text[j].setColor(sf::Color::Black);
+        letter_text[j].setFillColor(sf::Color::Black);
         letter_text[j].setString(letter_array[j]);
         letter_text[j].setPosition(kXMargin + kSquareSizeInPixels * j + (kSquareSizeInPixels - text_size) * 2 / 3,
                                 kScreenHeight - kYMargin * 1);        
@@ -792,7 +792,7 @@ void PlayState::ShowFinalScore(Application *app) {
     sf::Text final_score_text;
     final_score_text.setFont(font_);
     final_score_text.setCharacterSize(kGameIsOverWindowFinalScoreTextCharacterSize);
-    final_score_text.setColor(kGameIsOverWindowFinalScoreTextColor);
+    final_score_text.setFillColor(kGameIsOverWindowFinalScoreTextColor);
     final_score_text.setPosition(kGameIsOverWindowFinalScoreTextPosition);
     std::string final_score_string = "Score " + std::to_string(GetBlackScore()) + " : " + std::to_string(GetWhiteScore());
 
@@ -872,7 +872,7 @@ void PlayState::CreatePassTurnOkButton() {
 void PlayState::CreatePassTurnText() {
     pass_turn_text_.setFont(font_);
     pass_turn_text_.setCharacterSize(20);
-    pass_turn_text_.setColor(sf::Color(0, 0, 0));
+    pass_turn_text_.setFillColor(sf::Color(0, 0, 0));
     pass_turn_text_.setString(kPassTurnString);        
 }
 
